@@ -18,7 +18,6 @@
 ##
 
 Config = require('./Config.coffee');
-Cookie = require('cookie');
 HttpClient = require('./HttpClient.coffee');
 
 class IntraCommunicator
