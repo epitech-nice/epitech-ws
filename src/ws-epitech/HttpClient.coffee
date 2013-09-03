@@ -19,6 +19,7 @@
 
 http = require('http');
 https = require('https');
+Logger = require('./Logger.coffee');
 Url = require('url');
 When =require('when')
 
@@ -35,6 +36,7 @@ class HttpClient
 			res.on 'data', (chunk) ->
 				data = "#{data}#{chunk}";
 			res.on 'end', () ->
+				Logger.info("#{options.method} #{Url.format(options)}");
 				resolver.resolve({res:res, data:data});
 
 		req.on 'error', () =>

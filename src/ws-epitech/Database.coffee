@@ -31,4 +31,23 @@ class Database
 			deffer.resolve(true);
 		return deffer.promise;
 
+	find: (collection, search) ->
+		defer = When.defer();
+		collection = @db.collection(collection);
+		collection.find(search).toArray (err, results) ->
+			if (err) then defer.reject(err);
+			defer.resolve(results);
+		return defer.promise;
+
+	insert: (collection, data) ->
+		defer = When.defer();
+		collection = @db.collection(collection);
+		collection.insert data, (err, docs) ->
+			if (err)
+				defer.reject(err)
+				return;
+			defer.resolve(docs);
+		return defer.promise;
+
+
 module.exports = Database;

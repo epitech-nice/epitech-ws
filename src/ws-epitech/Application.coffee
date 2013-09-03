@@ -32,7 +32,7 @@ class Application
 		@database = new Database();
 		@server.on('get', @onRequest)
 		@routeManager = new RouteManager()
-		@intraCommunicator = new IntraCommunicator();
+		@intraCommunicator = new IntraCommunicator(@database);
 		@initRoutes()
 
 	run: () ->
@@ -41,7 +41,7 @@ class Application
 		p = When.join(p, @intraCommunicator.connect());
 		p.then () => @server.run()
 		p.otherwise (err) =>
-			console.log(err)
+			Logger.error(err)
 			process.exit(1);
 
 	onRequest: (req, res) =>
@@ -51,6 +51,7 @@ class Application
 		p.otherwise (error) ->
 			code = if (error.code?) then error.code else 500;
 			msg = if (error.msg?) then error.msg else "" + error;
+			if (error.stack) then Logger.error(error.stack);
 			res.error(code, msg)
 
 	onPedagoPlanningRequest: (req, res) =>

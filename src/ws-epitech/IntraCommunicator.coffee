@@ -19,13 +19,16 @@
 
 Config = require('./Config.coffee');
 HttpClient = require('./HttpClient.coffee');
+moment = require('moment');
+UrlCache  = require('./UrlCache.coffee');
 
 class IntraCommunicator
 
-	constructor: () ->
+	constructor: (database) ->
 		@login = Config.get('login');
 		@password = Config.get('password');
 		@sid = null;
+		@urlCache = new UrlCache(database);
 
 	connect: () ->
 		p = HttpClient.post("https://intra.epitech.eu", "login=#{encodeURIComponent(@login)}&password=#{encodeURIComponent(@password)}");
@@ -42,12 +45,22 @@ class IntraCommunicator
 	getCalandarEvents: (id) ->
 		return	@_getJson("https://intra.epitech.eu/planning/#{id}/events?format=json");
 
+	_get: (url) ->
+		p = @urlCache.get(url).then (data) =>
+			if (data != null) then return data;
+			p = HttpClient.get(url, {Cookie:"PHPSESSID=#{@sid}"}).then (res) =>
+				if (res.res.statusCode == 403)
+					return @connect().then () => @_get(url)
+				@urlCache.add(url, res.data, moment().add('m', 15).toDate());
+				return res.data;
+
 	_getJson: (url) ->
-		p = HttpClient.get(url, {Cookie:"PHPSESSID=#{@sid}"});
+		p = @_get(url)
 		return p.then (data) ->
-			jsonStr = data.data;
+			jsonStr = data;
 			jsonStr = jsonStr.replace("// Epitech JSON webservice ...", "");
 			return JSON.parse(jsonStr);
+
 
 
 module.exports = IntraCommunicator;

@@ -32,10 +32,11 @@ class HttpResponse
 
 	error: (code, msg) ->
 		if (!msg?) then msg = HttpErrors.get(code)
+		@setMime("application/json");
 		@end(JSON.stringify({code: code, msg: msg}))
 
 	success: (data) ->
-		if (@response.getHeader("Content-Type"))
+		if (@response.getHeader("Content-Type")?)
 			@end(data);
 			return;
 		@setMime("application/json");
