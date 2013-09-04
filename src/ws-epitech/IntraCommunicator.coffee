@@ -61,8 +61,8 @@ class IntraCommunicator
 			return cal
 
 
-	getNetsoulReport: (login, start, end) ->
-		@_getCompleteNetsoutReport(login).then (report) ->
+	getNsLog: (login, start, end) ->
+		@_getCompleteNsLog(login).then (report) ->
 			partialReport = {};
 			start = if (start?) then moment(start).format("YYYY-MM-DD") else null;
 			end = if (end?) then moment(end).format("YYYY-MM-DD") else null;
@@ -72,7 +72,7 @@ class IntraCommunicator
 			return partialReport;
 
 
-	_getCompleteNetsoutReport: (login) ->
+	_getCompleteNsLog: (login) ->
 		return Cache.find("INTRA.NETSOUL.#{login}"). then (cached) =>
 			if (cached?) then return cached;
 			return @_getJson("https://intra.epitech.eu/user/#{login}/netsoul?format=json").then (json) ->

@@ -61,13 +61,13 @@ class Application
 			res.setMime("text/calendar");
 			return cal.toVCal();
 
-	onNetsoulRequest: (req, res, data) =>
+	onNsLogRequest: (req, res, data) =>
 		params = req.getQuery();
-		return @intraCommunicator.getNetsoulReport(data.login, params.start, params.end);
+		return @intraCommunicator.getNsLog(data.login, params.start, params.end);
 
 
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
-		@routeManager.addRoute('/user/$login/netsoul', @onNetsoulRequest)
+		@routeManager.addRoute('/user/$login/nslog', @onNsLogRequest)
 
 module.exports = Application;
