@@ -17,13 +17,19 @@
 # along with ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
-Cache = require('./Cache.coffee');
+class Cache
+	constructor: () ->
 
-class UrlCache
-	constructor: (@db) ->
-		@collection = "urlCache"
+	find: (key) ->
+		p = @db.find(@collection, {key:key})
+		p.then (results) ->
+			if (results.length == 0) then return null;
+			return results[0].value;
 
-	find: (url) -> Cache.find("URL.#{url}");
-	insert: (url, data, ttl) -> Cache.insert("URL.#{url}", data, ttl);
+	insert: (key, value, ttl) ->
+		@db.insert(@collection, {key: key, value:value, ttl:ttl});
 
-module.exports = UrlCache;
+	setDb: (@db) ->
+		@collection = "cache"
+
+module.exports = new Cache();

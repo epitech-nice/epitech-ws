@@ -17,9 +17,14 @@
 # along with Ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
+Url = require('url');
+
 class HttpRequest
 	constructor: (@request) ->
 
 	getUrl: () -> @request.url
+
+	getQuery: () -> return Url.parse(@getUrl(), true).query;
+
 
 module.exports = HttpRequest

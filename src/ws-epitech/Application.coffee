@@ -17,13 +17,12 @@
 # along with Ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
-Calendar = require('./Calendar.coffee');
+Cache = require('./Cache.coffee');
 Config = require('./Config.coffee');
 Database = require('./Database.coffee');
 HttpServer = require('./HttpServer.coffee');
 IntraCommunicator = require('./IntraCommunicator.coffee');
 Logger = require('./Logger.coffee');
-moment = require('moment-timezone');
 RouteManager = require('./RouteManager.coffee');
 When = require('when');
 
@@ -35,6 +34,7 @@ class Application
 		@routeManager = new RouteManager()
 		@intraCommunicator = new IntraCommunicator(@database);
 		@initRoutes()
+		Cache.setDb(@database);
 
 	run: () ->
 		Logger.info("Start Application")
@@ -56,23 +56,18 @@ class Application
 			res.error(code, msg)
 
 
-	toUTCTime: (dateString, timezoneFrom) ->
-		offset = moment(new Date(dateString)).tz(timezoneFrom).zone() - new Date().getTimezoneOffset();
-		return moment(new Date(dateString)).add('m', offset).toDate();
-
 	onPedagoPlanningRequest: (req, res) =>
-		p = @intraCommunicator.getCalandarEvents(516);
-		p = p.then (json) =>
-			cal = new Calendar();
-			for activity in json.activities
-				start = @toUTCTime(activity.start, "Europe/Paris");
-				end = @toUTCTime(activity.end, "Europe/Paris");
-				cal.addEvent(activity.title, start, end);
+		return @intraCommunicator.getCalandar(516).then (cal) ->
 			res.setMime("text/calendar");
 			return cal.toVCal();
-		return p
+
+	onNetsoulRequest: (req, res, data) =>
+		params = req.getQuery();
+		return @intraCommunicator.getNetsoulReport(data.login, params.start, params.end);
+
 
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
+		@routeManager.addRoute('/user/$login/netsoul', @onNetsoulRequest)
 
 module.exports = Application;

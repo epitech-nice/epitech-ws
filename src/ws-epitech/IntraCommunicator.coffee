@@ -17,9 +17,11 @@
 # along with Ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
+Cache = require('./Cache.coffee');
+Calendar = require('./Calendar.coffee');
 Config = require('./Config.coffee');
 HttpClient = require('./HttpClient.coffee');
-moment = require('moment');
+moment = require('moment-timezone');
 UrlCache  = require('./UrlCache.coffee');
 
 class IntraCommunicator
@@ -42,16 +44,54 @@ class IntraCommunicator
 		return p;
 
 
-	getCalandarEvents: (id) ->
-		return	@_getJson("https://intra.epitech.eu/planning/#{id}/events?format=json");
+	intraToUTCTime: (dateString, timezoneFrom) ->
+		offset = moment(new Date(dateString)).tz(timezoneFrom).zone() - new Date().getTimezoneOffset();
+		return moment(new Date(dateString)).add('m', offset).toDate();
+
+
+
+	getCalandar: (id) ->
+		p = @_getJson("https://intra.epitech.eu/planning/#{id}/events?format=json");
+		return p.then (json) =>
+			cal = new Calendar();
+			for activity in json.activities
+				start = @intraToUTCTime(activity.start, "Europe/Paris");
+				end = @intraToUTCTime(activity.end, "Europe/Paris");
+				cal.addEvent(activity.title, start, end);
+			return cal
+
+
+	getNetsoulReport: (login, start, end) ->
+		@_getCompleteNetsoutReport(login).then (report) ->
+			partialReport = {};
+			start = if (start?) then moment(start).format("YYYY-MM-DD") else null;
+			end = if (end?) then moment(end).format("YYYY-MM-DD") else null;
+			for date, day of report
+				if ((!start? || date >= start) and (!end? || date <= end))
+					partialReport[date] = day;
+			return partialReport;
+
+
+	_getCompleteNetsoutReport: (login) ->
+		return Cache.find("INTRA.NETSOUL.#{login}"). then (cached) =>
+			if (cached?) then return cached;
+			return @_getJson("https://intra.epitech.eu/user/#{login}/netsoul?format=json").then (json) ->
+				report = {};
+				for rawDay in json
+					day = {school:rawDay[1], idleSchool:rawDay[2], out:rawDay[3], idleOut:rawDay[4], avg:rawDay[5]};
+					date = moment.unix(rawDay[0]).format("YYYY-MM-DD");
+					report[date] = day;
+				Cache.insert("INTRA.NETSOUL.#{login}", report, moment().add('h', 2));
+				return report;
+
 
 	_get: (url) ->
-		p = @urlCache.get(url).then (data) =>
-			if (data != null) then return data;
+		p = @urlCache.find(url).then (data) =>
+			if (data?) then return data;
 			p = HttpClient.get(url, {Cookie:"PHPSESSID=#{@sid}"}).then (res) =>
 				if (res.res.statusCode == 403)
 					return @connect().then () => @_get(url)
-				@urlCache.add(url, res.data, moment().add('m', 15).toDate());
+				@urlCache.insert(url, res.data, moment().add('m', 15).toDate());
 				return res.data;
 
 	_getJson: (url) ->
