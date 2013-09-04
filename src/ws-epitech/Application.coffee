@@ -23,6 +23,7 @@ Database = require('./Database.coffee');
 HttpServer = require('./HttpServer.coffee');
 IntraCommunicator = require('./IntraCommunicator.coffee');
 Logger = require('./Logger.coffee');
+moment = require('moment-timezone');
 RouteManager = require('./RouteManager.coffee');
 When = require('when');
 
@@ -54,12 +55,19 @@ class Application
 			if (error.stack) then Logger.error(error.stack);
 			res.error(code, msg)
 
+
+	toUTCTime: (dateString, timezoneFrom) ->
+		offset = moment(new Date(dateString)).tz(timezoneFrom).zone() - new Date().getTimezoneOffset();
+		return moment(new Date(dateString)).add('m', offset).toDate();
+
 	onPedagoPlanningRequest: (req, res) =>
 		p = @intraCommunicator.getCalandarEvents(516);
-		p = p.then (json) ->
+		p = p.then (json) =>
 			cal = new Calendar();
 			for activity in json.activities
-				cal.addEvent(activity.title, new Date(activity.start), new Date(activity.end));
+				start = @toUTCTime(activity.start, "Europe/Paris");
+				end = @toUTCTime(activity.end, "Europe/Paris");
+				cal.addEvent(activity.title, start, end);
 			res.setMime("text/calendar");
 			return cal.toVCal();
 		return p
