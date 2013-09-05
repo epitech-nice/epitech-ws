@@ -95,10 +95,11 @@ class IntraCommunicator
 
 	_getJson: (url) ->
 		p = @_get(url)
-		return p.then (data) ->
-			jsonStr = data;
+		return p.then (jsonStr) ->
 			jsonStr = jsonStr.replace("// Epitech JSON webservice ...", "");
-			return JSON.parse(jsonStr);
+			data = JSON.parse(jsonStr);
+			if (data.error?) then throw "Intra: #{data.error}"
+			return data;
 
 
 

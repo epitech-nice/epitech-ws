@@ -24,7 +24,7 @@ Url = require('url');
 When =require('when')
 
 class HttpClient
-	@request: (options, data, headers) ->
+	@request: (options, post, headers) ->
 		defer = When.defer()
 		tool = http;
 		if (options.protocol == 'https:')
@@ -35,8 +35,14 @@ class HttpClient
 			res.setEncoding('utf8');
 			res.on 'data', (chunk) ->
 				data = "#{data}#{chunk}";
-			res.on 'end', () ->
+			res.on 'end', () =>
 				Logger.info("#{options.method} #{Url.format(options)}");
+				if (res.headers.location?)
+					op = Url.parse(res.headers.location);
+					if (op.protocol? and op.host? and op.path?)
+						op.method = options.method
+						resolver.resolve(@request(op, post, headers));
+						return;
 				resolver.resolve({res:res, data:data});
 
 		req.on 'error', () =>
@@ -44,10 +50,10 @@ class HttpClient
 		if (headers?)
 			for header,value of headers
 				req.setHeader(header, value)
-		if (data?)
-			req.setHeader("Content-Length", data.length);
+		if (post?)
+			req.setHeader("Content-Length", post.length);
 			req.setHeader("Content-Type", "application/x-www-form-urlencoded");
-			req.write(data);
+			req.write(post);
 		req.end();
 		return (defer.promise);
 
@@ -55,6 +61,10 @@ class HttpClient
 		options = Url.parse(url);
 		options.method = "GET"
 		return HttpClient.request(options, null, headers);
+
+	@getJson: (url, headers) ->
+		return @get(url, headers).then (data) ->
+			return JSON.parse(data.data);
 
 	@post: (url, data, headers) ->
 		options = Url.parse(url);

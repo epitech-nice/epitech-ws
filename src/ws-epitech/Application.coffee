@@ -17,6 +17,7 @@
 # along with Ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
+Aer = require('./Aer.coffee');
 Cache = require('./Cache.coffee');
 Config = require('./Config.coffee');
 Database = require('./Database.coffee');
@@ -65,9 +66,12 @@ class Application
 		params = req.getQuery();
 		return @intraCommunicator.getNsLog(data.login, params.start, params.end);
 
+	onAerDutyRequest: (req, res) -> Aer.getDuty();
+
 
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
 		@routeManager.addRoute('/user/$login/nslog', @onNsLogRequest)
+		@routeManager.addRoute('/aer/duty', @onAerDutyRequest)
 
 module.exports = Application;
