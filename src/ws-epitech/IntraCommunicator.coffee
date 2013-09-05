@@ -49,7 +49,6 @@ class IntraCommunicator
 		return moment(new Date(dateString)).add('m', offset).toDate();
 
 
-
 	getCalandar: (id) ->
 		p = @_getJson("https://intra.epitech.eu/planning/#{id}/events?format=json");
 		return p.then (json) =>
@@ -64,8 +63,8 @@ class IntraCommunicator
 	getNsLog: (login, start, end) ->
 		@_getCompleteNsLog(login).then (report) ->
 			partialReport = {};
-			start = if (start?) then moment(start).format("YYYY-MM-DD") else null;
-			end = if (end?) then moment(end).format("YYYY-MM-DD") else null;
+			start = if (start?) then moment(start).tz("Europe/Paris").format("YYYY-MM-DD") else null;
+			end = if (end?) then moment(end).tz("Europe/Paris").format("YYYY-MM-DD") else null;
 			for date, day of report
 				if ((!start? || date >= start) and (!end? || date <= end))
 					partialReport[date] = day;
