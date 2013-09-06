@@ -17,12 +17,14 @@
 # along with Ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
+Aer = require('./Aer.coffee');
 Cache = require('./Cache.coffee');
 Config = require('./Config.coffee');
 Database = require('./Database.coffee');
 HttpServer = require('./HttpServer.coffee');
 IntraCommunicator = require('./IntraCommunicator.coffee');
 Logger = require('./Logger.coffee');
+NsWatch = require('./NsWatch.coffee');
 RouteManager = require('./RouteManager.coffee');
 When = require('when');
 
@@ -34,12 +36,14 @@ class Application
 		@routeManager = new RouteManager()
 		@intraCommunicator = new IntraCommunicator(@database);
 		@initRoutes()
+		@nsWatch = new NsWatch();
 		Cache.setDb(@database);
 
 	run: () ->
 		Logger.info("Start Application")
 		p = @database.run();
 		p = When.join(p, @intraCommunicator.connect());
+		p = When.join(p, @nsWatch.run(["quere_j", "anfoss_a"]));
 		p.then () => @server.run()
 		p.otherwise (err) =>
 			Logger.error(err)
@@ -61,13 +65,18 @@ class Application
 			res.setMime("text/calendar");
 			return cal.toVCal();
 
-	onNetsoulRequest: (req, res, data) =>
+	onNsLogRequest: (req, res, data) =>
 		params = req.getQuery();
-		return @intraCommunicator.getNetsoulReport(data.login, params.start, params.end);
+		return @intraCommunicator.getNsLog(data.login, params.start, params.end);
+
+	onAerDutyRequest: (req, res) => Aer.getDuty();
+	onNetsoulRequest: (req, res) => @nsWatch.getReport();
 
 
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
-		@routeManager.addRoute('/user/$login/netsoul', @onNetsoulRequest)
+		@routeManager.addRoute('/user/$login/nslog', @onNsLogRequest)
+		@routeManager.addRoute('/aer/duty', @onAerDutyRequest)
+		@routeManager.addRoute('/netsoul', @onNetsoulRequest)
 
 module.exports = Application;

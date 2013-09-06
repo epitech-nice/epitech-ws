@@ -49,7 +49,6 @@ class IntraCommunicator
 		return moment(new Date(dateString)).add('m', offset).toDate();
 
 
-
 	getCalandar: (id) ->
 		p = @_getJson("https://intra.epitech.eu/planning/#{id}/events?format=json");
 		return p.then (json) =>
@@ -61,25 +60,25 @@ class IntraCommunicator
 			return cal
 
 
-	getNetsoulReport: (login, start, end) ->
-		@_getCompleteNetsoutReport(login).then (report) ->
+	getNsLog: (login, start, end) ->
+		@_getCompleteNsLog(login).then (report) ->
 			partialReport = {};
-			start = if (start?) then moment(start).format("YYYY-MM-DD") else null;
-			end = if (end?) then moment(end).format("YYYY-MM-DD") else null;
+			start = if (start?) then moment(start).tz("Europe/Paris").format("YYYY-MM-DD") else null;
+			end = if (end?) then moment(end).tz("Europe/Paris").format("YYYY-MM-DD") else null;
 			for date, day of report
 				if ((!start? || date >= start) and (!end? || date <= end))
 					partialReport[date] = day;
 			return partialReport;
 
 
-	_getCompleteNetsoutReport: (login) ->
+	_getCompleteNsLog: (login) ->
 		return Cache.find("INTRA.NETSOUL.#{login}"). then (cached) =>
 			if (cached?) then return cached;
 			return @_getJson("https://intra.epitech.eu/user/#{login}/netsoul?format=json").then (json) ->
 				report = {};
 				for rawDay in json
 					day = {school:rawDay[1], idleSchool:rawDay[2], out:rawDay[3], idleOut:rawDay[4], avg:rawDay[5]};
-					date = moment.unix(rawDay[0]).format("YYYY-MM-DD");
+					date = moment.unix(rawDay[0]).tz("Europe/Paris").format("YYYY-MM-DD");
 					report[date] = day;
 				Cache.insert("INTRA.NETSOUL.#{login}", report, moment().add('h', 2));
 				return report;
@@ -96,10 +95,11 @@ class IntraCommunicator
 
 	_getJson: (url) ->
 		p = @_get(url)
-		return p.then (data) ->
-			jsonStr = data;
+		return p.then (jsonStr) ->
 			jsonStr = jsonStr.replace("// Epitech JSON webservice ...", "");
-			return JSON.parse(jsonStr);
+			data = JSON.parse(jsonStr);
+			if (data.error?) then throw "Intra: #{data.error}"
+			return data;
 
 
 
