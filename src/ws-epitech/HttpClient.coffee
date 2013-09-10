@@ -21,34 +21,35 @@ http = require('http');
 https = require('https');
 Logger = require('./Logger.coffee');
 Url = require('url');
-When =require('when')
+When = require('when')
 
 class HttpClient
-	@request: (options, post, headers) ->
+	@request: (options, post) ->
 		defer = When.defer()
 		tool = http;
-		if (options.protocol == 'https:')
+		if (options.url.protocol == 'https:')
 			tool = https;
-		req = tool.request options, (res) =>
-			data = ''
+		options.url.method = if (options.method?) then	options.method else "GET";
+		req = tool.request options.url, (res) =>
+			data = new Buffer(0);
 			resolver = defer.resolver
-			res.setEncoding('utf8');
 			res.on 'data', (chunk) ->
-				data = "#{data}#{chunk}";
+				data = Buffer.concat([data, chunk]);
 			res.on 'end', () =>
-				Logger.info("#{options.method} #{Url.format(options)}");
+				Logger.info("#{options.method} #{Url.format(options.url)}");
 				if (res.headers.location?)
-					op = Url.parse(res.headers.location);
-					if (op.protocol? and op.host? and op.path?)
-						op.method = options.method
-						resolver.resolve(@request(op, post, headers));
+					options.url = Url.parse(res.headers.location);
+					if (options.url.protocol? and options.url.host? and options.url.path?)
+						resolver.resolve(@request(options, post));
 						return;
-				resolver.resolve({res:res, data:data});
+				if (options.encoding? and options.encoding != "utf8")
+					data = new Iconv(options.encoding, 'UTF-8').convert(data);
+				resolver.resolve({res:res, data:data.toString('utf8')});
 
 		req.on 'error', () =>
 			defer.resolver.reject("Error - HttpClient - Can't load #{url}");
-		if (headers?)
-			for header,value of headers
+		if (options.headers?)
+			for header,value of options.headers
 				req.setHeader(header, value)
 		if (post?)
 			req.setHeader("Content-Length", post.length);
@@ -57,19 +58,20 @@ class HttpClient
 		req.end();
 		return (defer.promise);
 
-	@get: (url, headers) ->
-		options = Url.parse(url);
+	@get: (url, options) ->
+		options.url = Url.parse(url);
 		options.method = "GET"
-		return HttpClient.request(options, null, headers);
+		return HttpClient.request(options);
 
-	@getJson: (url, headers) ->
-		return @get(url, headers).then (data) ->
+	@getJson: (url, options) ->
+		return @get(url, options).then (data) ->
 			return JSON.parse(data.data);
 
-	@post: (url, data, headers) ->
-		options = Url.parse(url);
+	@post: (url, data, options) ->
+		if (!options?) then options = {};
+		options.url = Url.parse(url);
 		options.method = "POST"
-		options.headers = headers;
+		options.headers;
 		return HttpClient.request(options, data);
 
 

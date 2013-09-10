@@ -20,34 +20,52 @@
 EventEmitter = require('events').EventEmitter;
 Config = require('./Config.coffee');
 crypto = require('crypto');
+Logger = require('./Logger.coffee');
 net = require('net');
 When = require('when');
 
 
 class Communicator extends EventEmitter
+
 	constructor: (@serverName, @serverPort) ->
 		@client = null;
+		@connected = false;
 		@buffer = "";
 
 	run: () ->
+		@connected = true;
 		@client = net.connect(@serverPort, @serverName, @onConnect);
 		@client.setEncoding('ascii');
 		@client.on('data', @onData);
 		@client.on('error', @onError);
 		@client.on('close', @onClose);
 
-	onConnect: () => @emit('connect')
+	onConnect: () =>
+		@emit('connect')
+
 	send:(msg) ->
+		Logger.debug("Netsoul# > #{msg}");
 		@client.write("#{msg}\r\n", "ascii");
 
 	onData: (data) =>
 		@buffer = "#{@buffer}#{data}";
 		while ((i = @buffer.indexOf("\n")) != -1)
+			Logger.debug("Netsoul# < #{@buffer.slice(0, i)}");
 			@emit("cmd", @buffer.slice(0, i));
 			@buffer = @buffer.slice(i + 1);
 
-	onError: () => @emit("disconnect");
-	onClose: () => @emit("disconnect");
+	onError: () =>
+		@client.destroy();
+		@_onDisconnect()
+
+	onClose: () =>
+		@client.destroy();
+		@_onDisconnect()
+
+	_onDisconnect: () =>
+		if (@connected)
+			@connected = false;
+			@emit("disconnect");
 
 
 class NsClientLogger
@@ -82,7 +100,7 @@ class NsClientLogger
 class NsClient
 
 	constructor: (logins) ->
-		@communicator = new Communicator("ns-server.epita.fr", 4242);
+		@communicator = new Communicator(Config.get('ns-server'), Config.get('ns-port'));
 		@communicator.on('cmd', @_onCmd);
 		@communicator.on('disconnect', @_onDisconnect);
 		@logger = new NsClientLogger(logins);
@@ -125,6 +143,7 @@ class NsClient
 			hash.update("#{@md5Hash}-#{@clientIp}/#{@clientPort}#{Config.get('ns-password')}");
 			@_send("ext_user_log #{Config.get('ns-login')} #{hash.digest('hex')} none none").then () =>
 				logins = @logger.getLogins();
+				@runDefer.resolve(true);
 				@_send("state server:#{new Date().getTime();}")
 				@_send("user_cmd watch_log_user {#{logins.join(',')}}")
 				@_send("list_users {#{logins.join(',')}}")
@@ -176,8 +195,12 @@ class NsClient
 		if (@callback?) then @callback(cmd == "rep 002 -- cmd end")
 
 	_onDisconnect: () =>
-		@runDefer.reject("NetSoul: Disconnect");
-		@emit('diconnect');
+		@runDefer.reject("Netsoul: Connection Failed");
+		Logger.error("Netsoul: Connection failed");
+		setTimeout(() =>
+			Logger.error("Netsoul: Trying to reconnect");
+			@communicator.run()
+		, 2000);
 
 
 
@@ -191,8 +214,8 @@ class NsWatch
 		while (logins.length > 0)
 			s = logins.slice(0, 100)
 			logins.splice(0, 100)
-			nsClient = new NsClient(s);
-			@nsClients.push(nsClient);
+			@nsClients.push(new NsClient(s));
+
 		p = 0;
 		for client in @nsClients
 			p = When.join(p, client.run())
@@ -201,9 +224,9 @@ class NsWatch
 	getReport: () ->
 		report = {}
 		for client in @nsClients
-			for login,status of client.getReport()
+			for login, status of client.getReport()
 				isAtEpitech = false;
-				for socketNum,infos of status.sockets
+				for socketNum, infos of status.sockets
 					if infos.isAtEpitech
 						isAtEpitech = true;
 						break

@@ -25,7 +25,7 @@ class Config
 
 	load: () ->
 		@config = {server:{port: 4242}}
-		for key,value of fileConfig
+		for key, value of fileConfig
 			@config[key] = value;
 
 	get: (name) ->
