@@ -70,6 +70,20 @@ class IntraCommunicator
 					partialReport[date] = day;
 			return partialReport;
 
+	getCityUsers: (city) ->
+		return Cache.find("INTRA.ALL_USERS"). then (cached) =>
+			if (cached?) then return cached;
+			return @_getCityUserOffset(city, 0). then (data) =>
+				Cache.insert("INTRA.ALL_USERS", data, moment().add('d', 2).toDate())
+				return data;
+	_getCityUserOffset: (city, offset) ->
+		users = []
+		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=2013&active=true&location=#{city}&offset=#{offset}").then (data) =>
+				for user in data.items
+					users.push({login:user.login, firstname:user.prenom, lastname:user.nom});
+				if (users.length + offset < data.total)
+					return @_getCityUserOffset(city, users.length).then (users2) -> return users.concat(users2)
+				return users;
 
 	_getCompleteNsLog: (login) ->
 		return Cache.find("INTRA.NETSOUL.#{login}"). then (cached) =>
@@ -83,11 +97,10 @@ class IntraCommunicator
 				Cache.insert("INTRA.NETSOUL.#{login}", report, moment().add('h', 2).toDate());
 				return report;
 
-
 	_get: (url) ->
 		p = @urlCache.find(url).then (data) =>
 			if (data?) then return data;
-			p = HttpClient.get(url, {Cookie:"PHPSESSID=#{@sid}"}).then (res) =>
+			p = HttpClient.get(url, {headers:{Cookie:"PHPSESSID=#{@sid}"}}).then (res) =>
 				if (res.res.statusCode == 403)
 					return @connect().then () => @_get(url)
 				@urlCache.insert(url, res.data, moment().add('m', 15).toDate());
@@ -100,7 +113,5 @@ class IntraCommunicator
 			data = JSON.parse(jsonStr);
 			if (data.error?) then throw "Intra: #{data.error}"
 			return data;
-
-
 
 module.exports = IntraCommunicator;

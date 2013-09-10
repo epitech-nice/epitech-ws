@@ -24,6 +24,7 @@ Database = require('./Database.coffee');
 HttpServer = require('./HttpServer.coffee');
 IntraCommunicator = require('./IntraCommunicator.coffee');
 Logger = require('./Logger.coffee');
+NsWatch = require('./NsWatch.coffee');
 RouteManager = require('./RouteManager.coffee');
 When = require('when');
 
@@ -35,15 +36,21 @@ class Application
 		@routeManager = new RouteManager()
 		@intraCommunicator = new IntraCommunicator(@database);
 		@initRoutes()
+		@nsWatch = new NsWatch();
 		Cache.setDb(@database);
 
 	run: () ->
 		Logger.info("Start Application")
-		p = @database.run();
-		p = When.join(p, @intraCommunicator.connect());
+		p = @database.run().then () =>
+			return @intraCommunicator.connect().then () =>
+				@intraCommunicator.getCityUsers("FR/NCE").then (users) =>
+					logins = [];
+					logins.push(user.login) for user in users;
+					if (Config.get('ns-watch')?) then logins = logins.concat(Config.get('ns-watch'));
+					@nsWatch.run(logins);
 		p.then () => @server.run()
 		p.otherwise (err) =>
-			Logger.error(err)
+			Logger.error("Application: #{err}");
 			process.exit(1);
 
 	onRequest: (req, res) =>
@@ -66,12 +73,17 @@ class Application
 		params = req.getQuery();
 		return @intraCommunicator.getNsLog(data.login, params.start, params.end);
 
-	onAerDutyRequest: (req, res) -> Aer.getDuty();
+	onUserAllRequest: (req, res, data) =>
+		return @intraCommunicator.getCityUsers("FR/NCE");
 
+	onAerDutyRequest: (req, res) => Aer.getDuty();
+	onNetsoulRequest: (req, res) => @nsWatch.getReport();
 
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
+		@routeManager.addRoute('/user/all', @onUserAllRequest)
 		@routeManager.addRoute('/user/$login/nslog', @onNsLogRequest)
 		@routeManager.addRoute('/aer/duty', @onAerDutyRequest)
+		@routeManager.addRoute('/netsoul', @onNetsoulRequest)
 
 module.exports = Application;
