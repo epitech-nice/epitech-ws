@@ -69,7 +69,7 @@ class Application
 			res.setMime("text/calendar");
 			return cal.toVCal();
 
-	onNsLogRequest: (req, res, data) =>
+	onUserNsLogRequest: (req, res, data) =>
 		params = req.getQuery();
 		return @intraCommunicator.getNsLog(data.login, params.start, params.end);
 
