@@ -73,17 +73,21 @@ class Application
 		params = req.getQuery();
 		return @intraCommunicator.getNsLog(data.login, params.start, params.end);
 
-	onUserAllRequest: (req, res, data) =>
-		return @intraCommunicator.getCityUsers("FR/NCE");
-
+	onModuleAllRequest: (req, res) => @intraCommunicator.getCityModules("FR/NCE");
+	onUserAllRequest: (req, res) => @intraCommunicator.getCityUsers("FR/NCE");
 	onAerDutyRequest: (req, res) => Aer.getDuty();
-	onNetsoulRequest: (req, res) => @nsWatch.getReport();
+	onUserRequest: (req, res, data) => @intraCommunicator.getUser(data.login);
+	onUserNetsoulRequest: (req, res) => @nsWatch.getReport();
+	onUserModulesRequest: (req, res, data) => @intraCommunicator.getUserModules(data.login);
 
 
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
+		@routeManager.addRoute('/module/all', @onModuleAllRequest)
 		@routeManager.addRoute('/user/all', @onUserAllRequest)
-		@routeManager.addRoute('/user/$login/nslog', @onNsLogRequest)
+		@routeManager.addRoute('/user/$login', @onUserRequest)
+		@routeManager.addRoute('/user/$login/nslog', @onUserNsLogRequest)
+		@routeManager.addRoute('/user/$login/modules', @onUserModulesRequest)
 		@routeManager.addRoute('/aer/duty', @onAerDutyRequest)
 		@routeManager.addRoute('/netsoul', @onNetsoulRequest)
 

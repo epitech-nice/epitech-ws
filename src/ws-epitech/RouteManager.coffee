@@ -32,7 +32,7 @@ class RouteManager
 				vars[i] = match.substr(1)
 				i++;
 			patern = patern.replace(/\$[a-z]+/g, '([a-zA-Z0-9_-]*)');
-		@routes[patern] = {callback: callback, data: data, vars: vars};
+		@routes["^#{patern}$"] = {callback: callback, data: data, vars: vars};
 
 	exec: (req, res) ->
 		for patern, route of @routes

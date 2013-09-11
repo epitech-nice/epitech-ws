@@ -71,11 +71,69 @@ class IntraCommunicator
 			return partialReport;
 
 	getCityUsers: (city) ->
-		return Cache.find("INTRA.ALL_USERS"). then (cached) =>
+		return Cache.find("INTRA.ALL_USERS.#{city}"). then (cached) =>
 			if (cached?) then return cached;
 			return @_getCityUserOffset(city, 0). then (data) =>
-				Cache.insert("INTRA.ALL_USERS", data, moment().add('d', 2).toDate())
-				return data;
+				return Cache.insert("INTRA.ALL_USERS.#{city}", data, moment().add('d', 2).toDate()).then () ->
+					return data;
+
+
+	getCityModules: (city) ->
+		return Cache.find("INTRA.ALL_MODULES.#{city}"). then (cached) =>
+			if (cached?) then return cached;
+			return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}").then (data) =>
+				modules = []
+				for module in data
+					m = {};
+					m.title = module.title;
+					m.semester = module.semester;
+					m.scolaryear = module.scolaryear;
+					m.moduleCode = module.code;
+					m.instanceCode = module.codeinstance;
+					m.credits = module.credits;
+					modules.push(m)
+				return Cache.insert("INTRA.ALL_MODULES.#{city}", modules, moment().add('d', 2).toDate()).then () ->
+					return modules;
+
+
+	getUser: (login) ->
+		@_getJson("https://intra.epitech.eu/user/#{login}/?format=json").then (data) =>
+			user = {};
+			user.login = data.login;
+			user.lastname = data.lastname;
+			user.firstname = data.firstname;
+			user.picture = data.picture;
+			user.promo = data.promo;
+			user.semester = data.semester;
+			user.uid = data.uid;
+			user.location = data.location;
+			user.credits = user.possibleCredits = user.failedCredits = 0;
+			return @getUserModules(login).then (modules) ->
+				for module in modules
+					user.credits += if (module.grade != "-" and module.grade != "Echec") then module.credits else 0;
+					user.possibleCredits += if (module.grade == "-") then module.credits else 0;
+					user.failedCredits += if (module.grade == "Echec") then module.credits else 0;
+				return user;
+
+
+	getUserModules: (login) ->
+		return Cache.find("INTRA.USER.#{login}.MODULES").then (cached) =>
+			if (cached?) then return cached;
+			return @_getJson("https://intra.epitech.eu/user/#{login}/notes?format=json").then (data) =>
+				modules = [];
+				for module in data.modules
+					m = {};
+					m.scolaryear = module.scolaryear;
+					m.title = module.title;
+					m.grade = module.grade;
+					m.credits = module.credits;
+					m.semester = module.semester;
+					m.moduleCode = module.codemodule;
+					m.instanceCode = module.codeinstance;
+					modules.push(m);
+				return Cache.insert("INTRA.USER.#{login}.MODULES", modules, moment().add('d', 2).toDate()).then () ->
+					return modules;
+
 	_getCityUserOffset: (city, offset) ->
 		users = []
 		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=2013&active=true&location=#{city}&offset=#{offset}").then (data) =>
