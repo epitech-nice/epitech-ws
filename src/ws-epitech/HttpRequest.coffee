@@ -22,7 +22,7 @@ Url = require('url');
 class HttpRequest
 	constructor: (@request) ->
 
-	getUrl: () -> @request.url
+	getUrl: () -> Url.parse(@request.url).pathname;
 
 	getQuery: () -> return Url.parse(@getUrl(), true).query;
 
