@@ -24,7 +24,7 @@ class HttpRequest
 
 	getUrl: () -> Url.parse(@request.url).pathname;
 
-	getQuery: () -> return Url.parse(@getUrl(), true).query;
+	getQuery: () -> return Url.parse(@request.url, true).query;
 
 
 module.exports = HttpRequest
