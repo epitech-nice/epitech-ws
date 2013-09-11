@@ -19,7 +19,7 @@
 
 class HttpErrors
 	@errors = {}
-	@errors[404] ="The url you requested don't exit"
+	@errors[404] ="The url you requested don't exist"
 	@errors[500] = "Server error"
 	@get: (code) ->
 		if (HttpErrors.errors[code]?) then return HttpErrors.errors[code];
