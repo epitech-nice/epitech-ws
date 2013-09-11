@@ -25,13 +25,13 @@ class RouteManager
 
 	addRoute: (patern, callback, data = {}) ->
 		vars = {}
-		matches = patern.match(/\$([a-z]+)/g)
+		matches = patern.match(/\$([a-zA-Z]+)/g)
 		if (matches?)
 			i = 1
 			for match in matches
 				vars[i] = match.substr(1)
 				i++;
-			patern = patern.replace(/\$[a-z]+/g, '([a-zA-Z0-9_-]*)');
+			patern = patern.replace(/\$[a-zA-Z]+/g, '([a-zA-Z0-9_-]*)');
 		@routes["^#{patern}$"] = {callback: callback, data: data, vars: vars};
 
 	exec: (req, res) ->

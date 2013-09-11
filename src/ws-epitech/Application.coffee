@@ -74,6 +74,7 @@ class Application
 		return @intraCommunicator.getNsLog(data.login, params.start, params.end);
 
 	onModuleAllRequest: (req, res) => @intraCommunicator.getCityModules("FR/NCE");
+	onModuleRegisteredRequest: (req, res, data) => @intraCommunicator.getModuleRegistred(data.year, data.moduleCode, data.instanceCode)
 	onUserAllRequest: (req, res) => @intraCommunicator.getCityUsers("FR/NCE");
 	onAerDutyRequest: (req, res) => Aer.getDuty();
 	onUserRequest: (req, res, data) => @intraCommunicator.getUser(data.login);
@@ -84,6 +85,7 @@ class Application
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
 		@routeManager.addRoute('/module/all', @onModuleAllRequest)
+		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/registered', @onModuleRegisteredRequest)
 		@routeManager.addRoute('/user/all', @onUserAllRequest)
 		@routeManager.addRoute('/user/$login', @onUserRequest)
 		@routeManager.addRoute('/user/$login/nslog', @onUserNsLogRequest)

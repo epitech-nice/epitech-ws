@@ -96,6 +96,13 @@ class IntraCommunicator
 					return modules;
 
 
+	getModuleRegistred: (year, moduleCode, instanceCode) ->
+		@_getJson("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/registered?format=json").then (data) ->
+			students = {}
+			for student in data
+				students[student.login] = {grade: student.grade, credits: student.credits}
+			return students;
+
 	getUser: (login) ->
 		@_getJson("https://intra.epitech.eu/user/#{login}/?format=json").then (data) =>
 			user = {};
@@ -114,7 +121,6 @@ class IntraCommunicator
 					user.possibleCredits += if (module.grade == "-") then module.credits else 0;
 					user.failedCredits += if (module.grade == "Echec") then module.credits else 0;
 				return user;
-
 
 	getUserModules: (login) ->
 		return Cache.find("INTRA.USER.#{login}.MODULES").then (cached) =>
@@ -171,6 +177,5 @@ class IntraCommunicator
 			data = JSON.parse(jsonStr);
 			if (data.error?) then throw "Intra: #{data.error}"
 			return data;
-
 
 module.exports = IntraCommunicator;
