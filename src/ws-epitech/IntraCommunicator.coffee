@@ -103,40 +103,48 @@ class IntraCommunicator
 
 
 	getModuleRegistred: (year, moduleCode, instanceCode) ->
-		@_getJson("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/registered?format=json").then (data) ->
-			students = {}
-			for student in data
-				students[student.login] = {grade: student.grade, credits: student.credits}
-			return students;
+		return Cache.find("INTRA.MODULE.#{year}.#{module_code}.#{instanceCode}.REGISTERED").then (cached) =>
+			if (cached?) then return cached;
+			@_getJson("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/registered?format=json").then (data) ->
+				students = {}
+				for student in data
+					students[student.login] = {grade: student.grade, credits: student.credits}
+				return Cache.insert("INTRA.MODULE.#{year}.#{module_code}.#{instanceCode}.REGISTERED", students, moment().add('d', 1).toDate()).then () ->
+					return students;
 
 	getModulePresent: (year, moduleCode, instanceCode) ->
-		@_get("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/present?format=json").then (data) ->
-			regexp = new RegExp('className": "notes",[\\s\\S]*"items": (\\[.*\\]),[\\s\\S]+"columns":');
-			res = regexp.exec(data);
-			students = JSON.parse(res[1]);
-			data = {}
-			for s in students
-				data[s.login] = {total_registered: s.total_registered, total_present: s.total_present, total_absent: s.total_absent};
-			return data;
+		return Cache.find("INTRA.MODULE.#{year}.#{module_code}.#{instanceCode}.PRESENT").then (cached) =>
+			if (cached?) then return cached;
+			@_get("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/present?format=json").then (data) ->
+				regexp = new RegExp('className": "notes",[\\s\\S]*"items": (\\[.*\\]),[\\s\\S]+"columns":');
+				res = regexp.exec(data);
+				students = JSON.parse(res[1]);
+				data = {}
+				for s in students
+					data[s.login] = {total_registered: s.total_registered, total_present: s.total_present, total_absent: s.total_absent};
+				return Cache.insert("INTRA.MODULE.#{year}.#{module_code}.#{instanceCode}.PRESENT", data, moment().add('d', 1).toDate()).then () ->
+					return data;
 
 	getUser: (login) ->
-		@_getJson("https://intra.epitech.eu/user/#{login}/?format=json").then (data) =>
-			user = {};
-			user.login = data.login;
-			user.lastname = data.lastname;
-			user.firstname = data.firstname;
-			user.picture = data.picture;
-			user.promo = data.promo;
-			user.semester = data.semester;
-			user.uid = data.uid;
-			user.location = data.location;
-			user.credits = user.possibleCredits = user.failedCredits = 0;
-			return @getUserModules(login).then (modules) ->
-				for module in modules
-					user.credits += if (module.grade != "-" and module.grade != "Echec") then module.credits else 0;
-					user.possibleCredits += if (module.grade == "-") then module.credits else 0;
-					user.failedCredits += if (module.grade == "Echec") then module.credits else 0;
-				return user;
+		return Cache.find("INTRA.USER.#{login}").then (cached) =>
+			@_getJson("https://intra.epitech.eu/user/#{login}/?format=json").then (data) =>
+				user = {};
+				user.login = data.login;
+				user.lastname = data.lastname;
+				user.firstname = data.firstname;
+				user.picture = data.picture;
+				user.promo = data.promo;
+				user.semester = data.semester;
+				user.uid = data.uid;
+				user.location = data.location;
+				user.credits = user.possibleCredits = user.failedCredits = 0;
+				return @getUserModules(login).then (modules) ->
+					for module in modules
+						user.credits += if (module.grade != "-" and module.grade != "Echec") then module.credits else 0;
+						user.possibleCredits += if (module.grade == "-") then module.credits else 0;
+						user.failedCredits += if (module.grade == "Echec") then module.credits else 0;
+					return Cache.insert("INTRA.USER.#{login}", user, moment().add('d', 1).toDate()).then () ->
+						return user;
 
 	getUserModules: (login) ->
 		return Cache.find("INTRA.USER.#{login}.MODULES").then (cached) =>
