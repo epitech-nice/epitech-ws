@@ -103,17 +103,17 @@ class IntraCommunicator
 
 
 	getModuleRegistred: (year, moduleCode, instanceCode) ->
-		return Cache.find("INTRA.MODULE.#{year}.#{module_code}.#{instanceCode}.REGISTERED").then (cached) =>
+		return Cache.find("INTRA.MODULE.#{year}.#{moduleCode}.#{instanceCode}.REGISTERED").then (cached) =>
 			if (cached?) then return cached;
 			@_getJson("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/registered?format=json").then (data) ->
 				students = {}
 				for student in data
 					students[student.login] = {grade: student.grade, credits: student.credits}
-				return Cache.insert("INTRA.MODULE.#{year}.#{module_code}.#{instanceCode}.REGISTERED", students, moment().add('d', 1).toDate()).then () ->
+				return Cache.insert("INTRA.MODULE.#{year}.#{moduleCode}.#{instanceCode}.REGISTERED", students, moment().add('d', 1).toDate()).then () ->
 					return students;
 
 	getModulePresent: (year, moduleCode, instanceCode) ->
-		return Cache.find("INTRA.MODULE.#{year}.#{module_code}.#{instanceCode}.PRESENT").then (cached) =>
+		return Cache.find("INTRA.MODULE.#{year}.#{moduleCode}.#{instanceCode}.PRESENT").then (cached) =>
 			if (cached?) then return cached;
 			@_get("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/present?format=json").then (data) ->
 				regexp = new RegExp('className": "notes",[\\s\\S]*"items": (\\[.*\\]),[\\s\\S]+"columns":');
@@ -122,7 +122,7 @@ class IntraCommunicator
 				data = {}
 				for s in students
 					data[s.login] = {total_registered: s.total_registered, total_present: s.total_present, total_absent: s.total_absent};
-				return Cache.insert("INTRA.MODULE.#{year}.#{module_code}.#{instanceCode}.PRESENT", data, moment().add('d', 1).toDate()).then () ->
+				return Cache.insert("INTRA.MODULE.#{year}.#{moduleCode}.#{instanceCode}.PRESENT", data, moment().add('d', 1).toDate()).then () ->
 					return data;
 
 	getUser: (login) ->
