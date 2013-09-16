@@ -82,7 +82,12 @@ class IntraCommunicator
 	getCityModules: (city) ->
 		return Cache.find("INTRA.ALL_MODULES.#{city}"). then (cached) =>
 			if (cached?) then return cached;
-			return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}").then (data) =>
+			end = Config.get('scolar-year');
+			begin = end - 3;
+			scolaryear = ""
+			for year in [begin..end]
+				scolaryear = "#{scolaryear}&scolaryear[]=#{year}"
+			return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}&#{scolaryear}").then (data) =>
 				modules = []
 				for module in data
 					m = {};
