@@ -59,6 +59,8 @@ class HttpClient
 		return (defer.promise);
 
 	@get: (url, options) ->
+		if (!options)
+			options = {}
 		options.url = Url.parse(url);
 		options.method = "GET"
 		return HttpClient.request(options);

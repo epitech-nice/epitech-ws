@@ -23,6 +23,7 @@ Config = require('./Config.coffee');
 HttpClient = require('./HttpClient.coffee');
 moment = require('moment-timezone');
 UrlCache  = require('./UrlCache.coffee');
+When = require('when');
 
 class IntraCommunicator
 
@@ -81,7 +82,12 @@ class IntraCommunicator
 	getCityModules: (city) ->
 		return Cache.find("INTRA.ALL_MODULES.#{city}"). then (cached) =>
 			if (cached?) then return cached;
-			return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}").then (data) =>
+			end = Config.get('scolar-year');
+			begin = end - 3;
+			scolaryear = ""
+			for year in [begin..end]
+				scolaryear = "#{scolaryear}&scolaryear[]=#{year}"
+			return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}&#{scolaryear}").then (data) =>
 				modules = []
 				for module in data
 					m = {};
@@ -102,6 +108,16 @@ class IntraCommunicator
 			for student in data
 				students[student.login] = {grade: student.grade, credits: student.credits}
 			return students;
+
+	getModulePresent: (year, moduleCode, instanceCode) ->
+		@_get("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/present?format=json").then (data) ->
+			regexp = new RegExp('className": "notes",[\\s\\S]*"items": (\\[.*\\]),[\\s\\S]+"columns":');
+			res = regexp.exec(data);
+			students = JSON.parse(res[1]);
+			data = {}
+			for s in students
+				data[s.login] = {total_registered: s.total_registered, total_present: s.total_present, total_absent: s.total_absent};
+			return data;
 
 	getUser: (login) ->
 		@_getJson("https://intra.epitech.eu/user/#{login}/?format=json").then (data) =>
@@ -143,11 +159,14 @@ class IntraCommunicator
 	_getCityUserOffset: (city, offset) ->
 		users = []
 		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=2013&active=true&location=#{city}&offset=#{offset}").then (data) =>
-				for user in data.items
-					users.push({login:user.login, firstname:user.prenom, lastname:user.nom});
-				if (users.length + offset < data.total)
-					return @_getCityUserOffset(city, users.length).then (users2) -> return users.concat(users2)
-				return users;
+				p = for user in data.items
+					@getUser(user.login).then (data) =>
+						users.push(data);
+				if (p.length + offset < data.total)
+					p.push(@_getCityUserOffset(city, p.length).then (users2) ->
+						return users.concat(users2)
+					)
+				return When.all(p).then () -> return users;
 
 	_getCompleteNsLog: (login) ->
 		return Cache.find("INTRA.NETSOUL.#{login}"). then (cached) =>
