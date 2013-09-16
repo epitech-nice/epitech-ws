@@ -78,7 +78,7 @@ class Application
 	onUserAllRequest: (req, res) => @intraCommunicator.getCityUsers("FR/NCE");
 	onAerDutyRequest: (req, res) => Aer.getDuty();
 	onUserRequest: (req, res, data) => @intraCommunicator.getUser(data.login);
-	onUserNetsoulRequest: (req, res) => @nsWatch.getReport();
+	onNetsoulRequest: (req, res) => @nsWatch.getReport();
 	onUserModulesRequest: (req, res, data) => @intraCommunicator.getUserModules(data.login);
 
 

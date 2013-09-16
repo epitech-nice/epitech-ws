@@ -23,6 +23,7 @@ Config = require('./Config.coffee');
 HttpClient = require('./HttpClient.coffee');
 moment = require('moment-timezone');
 UrlCache  = require('./UrlCache.coffee');
+When = require('when');
 
 class IntraCommunicator
 
@@ -143,11 +144,14 @@ class IntraCommunicator
 	_getCityUserOffset: (city, offset) ->
 		users = []
 		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=2013&active=true&location=#{city}&offset=#{offset}").then (data) =>
-				for user in data.items
-					users.push({login:user.login, firstname:user.prenom, lastname:user.nom});
-				if (users.length + offset < data.total)
-					return @_getCityUserOffset(city, users.length).then (users2) -> return users.concat(users2)
-				return users;
+				p = for user in data.items
+					@getUser(user.login).then (data) =>
+						users.push(data);
+				if (p.length + offset < data.total)
+					p.push(@_getCityUserOffset(city, p.length).then (users2) ->
+						return users.concat(users2)
+					)
+				return When.all(p).then () -> return users;
 
 	_getCompleteNsLog: (login) ->
 		return Cache.find("INTRA.NETSOUL.#{login}"). then (cached) =>
