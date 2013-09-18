@@ -172,7 +172,7 @@ class IntraCommunicator
 						users.push(data);
 				if (p.length + offset < data.total)
 					p.push(@_getCityUserOffset(city, p.length).then (users2) ->
-						return users.concat(users2)
+						users = users.concat(users2)
 					)
 				return When.all(p).then () -> return users;
 
