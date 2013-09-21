@@ -76,16 +76,17 @@ class NsClientLogger
 
 	log: (user) ->
 		sockets = @logins[user.login].sockets;
+		infos = {socket:user.socket, isAtEpitech: user.isAtEpitech, isActif:user.status == "actif"};
 		i = 0;
 		while ( i < sockets.length )
 			if (sockets[i].socket == user.socket)
 				if (user.connected)
-					sockets[i] = {socket:user.socket, isAtEpitech: user.isAtEpitech};
+					sockets[i] = infos
 				else
 					sockets.splice(i, 1);
 				return;
 			i++;
-		sockets.push({socket:user.socket, isAtEpitech: user.isAtEpitech});
+		sockets.push(infos)
 
 	getReport: () ->
 		return @logins;
@@ -226,11 +227,13 @@ class NsWatch
 		for client in @nsClients
 			for login, status of client.getReport()
 				isAtEpitech = false;
+				isActif = false;
 				for socketNum, infos of status.sockets
 					if infos.isAtEpitech
 						isAtEpitech = true;
-						break
-				report[login] = {connected: status.sockets.length != 0, isAtEpitech: isAtEpitech};
+					if infos.isActif
+						isActif = true;
+				report[login] = {connected: status.sockets.length != 0, isAtEpitech: isAtEpitech, isActif:isActif};
 		return report;
 
 module.exports	= NsWatch;
