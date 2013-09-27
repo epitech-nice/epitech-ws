@@ -38,8 +38,10 @@ class HttpClient
 			res.on 'end', () =>
 				Logger.info("#{options.method} #{Url.format(options.url)}");
 				if (res.headers.location?)
-					options.url = Url.parse(res.headers.location);
-					if (options.url.protocol? and options.url.host? and options.url.path?)
+					url = Url.parse(res.headers.location);
+					if (url.path != options.url.path)
+						for key, value of url
+							if (url[key]?) then options.url[key] = value;
 						resolver.resolve(@request(options, post));
 						return;
 				if (options.encoding? and options.encoding != "utf8")

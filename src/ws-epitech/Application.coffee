@@ -76,11 +76,22 @@ class Application
 	onModuleAllRequest: (req, res) => @intraCommunicator.getCityModules("FR/NCE");
 	onModuleRegisteredRequest: (req, res, data) => @intraCommunicator.getModuleRegistred(data.year, data.moduleCode, data.instanceCode)
 	onModulePresentRequest: (req, res, data) => @intraCommunicator.getModulePresent(data.year, data.moduleCode, data.instanceCode)
+	onModuleProjectsRequest: (req, res, data) => @intraCommunicator.getModuleProject(data.year, data.moduleCode, data.instanceCode)
 	onUserAllRequest: (req, res) => @intraCommunicator.getCityUsers("FR/NCE");
 	onAerDutyRequest: (req, res) => Aer.getDuty();
 	onUserRequest: (req, res, data) => @intraCommunicator.getUser(data.login);
 	onNetsoulRequest: (req, res) => @nsWatch.getReport();
 	onUserModulesRequest: (req, res, data) => @intraCommunicator.getUserModules(data.login);
+	onYearModuleRequest: (req, res, data) => @intraCommunicator.getCityModules("FR/NCE", {scolaryear: parseInt(data.year)});
+	onYearProjectsRequest: (req, res, data) =>
+		@intraCommunicator.getCityModules("FR/NCE", {scolaryear: parseInt(data.year)}).then (modules) =>
+			p = for module in modules
+				((module) =>
+					@intraCommunicator.getModuleProject(module.scolaryear, module.moduleCode, module.instanceCode).then (projects) =>
+						module.projects = projects
+						return module
+				)(module)
+			return When.all(p).then (data) -> return data;
 
 
 	initRoutes: () ->
@@ -88,6 +99,8 @@ class Application
 		@routeManager.addRoute('/module/all', @onModuleAllRequest)
 		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/registered', @onModuleRegisteredRequest)
 		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/present', @onModulePresentRequest)
+		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/project', @onModuleProjectsRequest)
+		@routeManager.addRoute('/module/$year/all', @onYearModuleRequest)
 		@routeManager.addRoute('/user/all', @onUserAllRequest)
 		@routeManager.addRoute('/user/$login', @onUserRequest)
 		@routeManager.addRoute('/user/$login/nslog', @onUserNsLogRequest)
