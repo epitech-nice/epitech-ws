@@ -39,9 +39,11 @@ class RouteManager
 			data = {}
 			matches = new RegExp(patern).exec(req.getUrl())
 			if (matches?)
-				data = route['data']
+				for key, value of route['data']
+					data[key] = value;
 				for id, name of route.vars
 					data[name] = matches[id]
 				return fn.call(route.callback, req, res, data)
 		return null;
+
 module.exports = RouteManager

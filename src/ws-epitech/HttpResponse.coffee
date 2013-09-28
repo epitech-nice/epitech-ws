@@ -17,34 +17,16 @@
 # along with Ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
-class HttpErrors
-	@errors = {}
-	@errors[404] ="The url you requested don't exist"
-	@errors[500] = "Server error"
-	@get: (code) ->
-		if (HttpErrors.errors[code]?) then return HttpErrors.errors[code];
-		return HttpErrors.errors[500];
-
-
 class HttpResponse
 	constructor: (@response) ->
 
-
-	error: (code, msg) ->
-		if (!msg?) then msg = HttpErrors.get(code)
-		@setMime("application/json");
-		@end(JSON.stringify({code: code, msg: msg}))
-
-	success: (data) ->
-		if (@response.getHeader("Content-Type")?)
-			@end(data);
-			return;
-		@setMime("application/json");
-		@end(JSON.stringify({code: 200, msg: "Success", data: data}))
-
-
 	setMime: (mime) ->
 		@response.setHeader("Content-Type", mime);
+
+	endJSON: (obj) ->
+		@setMime("application/json");
+		@response.write(JSON.stringify(obj));
+		@response.end();
 
 	end: (@message) ->
 		@response.write(@message);

@@ -23,6 +23,7 @@ Config = require('./Config.coffee');
 HttpClient = require('./HttpClient.coffee');
 moment = require('moment-timezone');
 UrlCache  = require('./UrlCache.coffee');
+Utils = require('./Utils.coffee');
 When = require('when');
 
 class IntraCommunicator
@@ -79,27 +80,24 @@ class IntraCommunicator
 					return data;
 
 
-	getCityModules: (city) ->
-		return Cache.find("INTRA.ALL_MODULES.#{city}"). then (cached) =>
-			if (cached?) then return cached;
-			end = Config.get('scolar-year');
-			begin = end - 3;
-			scolaryear = ""
-			for year in [begin..end]
-				scolaryear = "#{scolaryear}&scolaryear[]=#{year}"
-			return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}&#{scolaryear}").then (data) =>
-				modules = []
-				for module in data
-					m = {};
-					m.title = module.title;
-					m.semester = module.semester;
-					m.scolaryear = module.scolaryear;
-					m.moduleCode = module.code;
-					m.instanceCode = module.codeinstance;
-					m.credits = module.credits;
-					modules.push(m)
-				return Cache.insert("INTRA.ALL_MODULES.#{city}", modules, moment().add('d', 2).toDate()).then () ->
-					return modules;
+	getCityModules: (city, filters) ->
+		end = Config.get('scolar-year');
+		begin = end - 3;
+		scolaryear = ""
+		for year in [begin..end]
+			scolaryear = "#{scolaryear}&scolaryear[]=#{year}"
+		return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}&#{scolaryear}").then (data) =>
+			modules = []
+			for module in data
+				m = {};
+				m.title = module.title;
+				m.semester = module.semester;
+				m.scolaryear = module.scolaryear;
+				m.moduleCode = module.code;
+				m.instanceCode = module.codeinstance;
+				m.credits = module.credits;
+				if (Utils.match(m, filters)) then modules.push(m)
+			return modules;
 
 
 	getModuleRegistred: (year, moduleCode, instanceCode) ->
@@ -124,6 +122,19 @@ class IntraCommunicator
 					data[s.login] = {total_registered: s.total_registered, total_present: s.total_present, total_absent: s.total_absent};
 				return Cache.insert("INTRA.MODULE.#{year}.#{moduleCode}.#{instanceCode}.PRESENT", data, moment().add('d', 1).toDate()).then () ->
 					return data;
+
+
+	getModuleProject: (year, moduleCode, instanceCode) ->
+		return Cache.find("INTRA.MODULE.#{year}.#{moduleCode}.#{instanceCode}").then (cached) =>
+			if (cached?) then return cached;
+			@_getJson("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}?format=json").then (data) ->
+				projects = [];
+				activities = data.activites
+				for activity in activities
+					if (activity.is_projet)
+						projects.push({name: activity.title, start: activity.start, end: activity.end});
+				return Cache.insert("INTRA.MODULE.#{year}.#{moduleCode}.#{instanceCode}", projects, moment().add('d', 1).toDate()).then () ->
+					return projects;
 
 	getUser: (login) ->
 		return Cache.find("INTRA.USER.#{login}").then (cached) =>
@@ -171,7 +182,7 @@ class IntraCommunicator
 					@getUser(user.login).then (data) =>
 						users.push(data);
 				if (p.length + offset < data.total)
-					p.push(@_getCityUserOffset(city, p.length).then (users2) ->
+					p.push(@_getCityUserOffset(city, p.length + offset).then (users2) ->
 						users = users.concat(users2)
 					)
 				return When.all(p).then () -> return users;

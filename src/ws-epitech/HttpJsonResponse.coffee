@@ -17,21 +17,22 @@
 # along with Ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
-Url = require('url');
-
-class HttpRequest
-	constructor: (@request) ->
-		if (@request)
-			@url = Url.parse(@request.url, true);
-		else
-			@url = Url.parse('');
-
-	getUrl: () -> @url.pathname;
-	setUrl: (url) ->
-		@url = Url.parse(url, true);
-		return this;
+class HttpJsonErrors
+	@errors = {}
+	@errors[1] = "Bad Parameters";
+	@errors[404] ="The url you requested don't exit"
+	@errors[500] = "Server error"
+	@get: (code) ->
+		if (HttpJsonErrors.errors[code]?) then return HttpJsonErrors.errors[code];
+		return HttpJsonErrors.errors[500];
 
 
-	getQuery: () -> return @url.query;
+class HttpJsonResponse
+	@error: (code, msg) ->
+		if (!msg?) then msg = HttpJsonErrors.get(code)
+		return {code: code, msg: msg};
 
-module.exports = HttpRequest
+	@success: (data) ->
+		return {code: 200, msg: "Success", data: data};
+
+module.exports = HttpJsonResponse;

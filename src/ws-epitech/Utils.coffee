@@ -17,21 +17,10 @@
 # along with Ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
-Url = require('url');
-
-class HttpRequest
-	constructor: (@request) ->
-		if (@request)
-			@url = Url.parse(@request.url, true);
-		else
-			@url = Url.parse('');
-
-	getUrl: () -> @url.pathname;
-	setUrl: (url) ->
-		@url = Url.parse(url, true);
-		return this;
-
-
-	getQuery: () -> return @url.query;
-
-module.exports = HttpRequest
+module.exports = {};
+module.exports.match = (obj, filter) ->
+	if (!filter) then return true
+	for key, value of filter
+		if !obj[key]? or obj[key] != value
+			return false
+	return true
