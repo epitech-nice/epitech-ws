@@ -17,20 +17,22 @@
 # along with Ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
+class HttpJsonErrors
+	@errors = {}
+	@errors[1] = "Bad Parameters";
+	@errors[404] ="The url you requested don't exit"
+	@errors[500] = "Server error"
+	@get: (code) ->
+		if (HttpJsonErrors.errors[code]?) then return HttpJsonErrors.errors[code];
+		return HttpJsonErrors.errors[500];
 
-class HttpResponse
-	constructor: (@response) ->
 
-	setMime: (mime) ->
-		@response.setHeader("Content-Type", mime);
+class HttpJsonResponse
+	@error: (code, msg) ->
+		if (!msg?) then msg = HttpJsonErrors.get(code)
+		return {code: code, msg: msg};
 
-	endJSON: (obj) ->
-		@setMime("application/json");
-		@response.write(JSON.stringify(obj));
-		@response.end();
+	@success: (data) ->
+		return {code: 200, msg: "Success", data: data};
 
-	end: (@message) ->
-		@response.write(@message);
-		@response.end()
-
-module.exports = HttpResponse
+module.exports = HttpJsonResponse;

@@ -22,6 +22,9 @@ Cache = require('./Cache.coffee');
 Config = require('./Config.coffee');
 Database = require('./Database.coffee');
 HttpServer = require('./HttpServer.coffee');
+HttpRequest = require('./HttpRequest.coffee');
+HttpResponse = require('./HttpResponse.coffee');
+HttpJsonResponse = require('./HttpJsonResponse.coffee');
 IntraCommunicator = require('./IntraCommunicator.coffee');
 Logger = require('./Logger.coffee');
 NsWatch = require('./NsWatch.coffee');
@@ -53,16 +56,39 @@ class Application
 			Logger.error("Application: #{err}");
 			process.exit(1);
 
+
 	onRequest: (req, res) =>
 		p = @routeManager.exec(req, res)
-		if (p == null) then return res.error(404);
-		p.then (data) -> res.success(data)
+		if (p == null) then return res.endJSON(HttpJsonResponse.error(404));
+		p.then (data) ->
+			if (typeof data != "object") then res.end(data) else res.endJSON(HttpJsonResponse.success(data))
+
 		p.otherwise (error) ->
 			code = if (error.code?) then error.code else 500;
 			msg = if (error.msg?) then error.msg else "" + error;
 			if (error.stack) then Logger.error(error.stack);
-			res.error(code, msg)
+			res.endJSON(HttpJsonResponse.error(code, msg));
 
+	onChainedRequest: (req, res, data) =>
+		urls = req.getQuery().urls;
+		if (!urls?) then throw {code:1}
+		if (typeof urls == "string") then urls = [urls];
+		p = for url in urls
+			f = (req, res) =>
+				promise = @routeManager.exec(req, res);
+				d = When.defer();
+				if (promise == null)
+					d.resolve({url: req.getUrl(), data: HttpJsonResponse.error(404)});
+				else
+					promise.then (data) -> d.resolve({url: req.getUrl(), data: HttpJsonResponse.success(data)});
+					promise.otherwise (error) ->
+						code = if (error.code?) then error.code else 500;
+						msg = if (error.msg?) then error.msg else "" + error;
+						if (error.stack) then Logger.error(error.stack);
+						d.resolve({url: req.getUrl(), data: HttpJsonResponse.error(code, msg)});
+				return d.promise;
+			f(new HttpRequest().setUrl(url), new HttpResponse())
+		return When.all(p)
 
 	onPedagoPlanningRequest: (req, res) =>
 		return @intraCommunicator.getCalandar(516).then (cal) ->
@@ -83,16 +109,6 @@ class Application
 	onNetsoulRequest: (req, res) => @nsWatch.getReport();
 	onUserModulesRequest: (req, res, data) => @intraCommunicator.getUserModules(data.login);
 	onYearModuleRequest: (req, res, data) => @intraCommunicator.getCityModules("FR/NCE", {scolaryear: parseInt(data.year)});
-	onYearProjectsRequest: (req, res, data) =>
-		@intraCommunicator.getCityModules("FR/NCE", {scolaryear: parseInt(data.year)}).then (modules) =>
-			p = for module in modules
-				((module) =>
-					@intraCommunicator.getModuleProject(module.scolaryear, module.moduleCode, module.instanceCode).then (projects) =>
-						module.projects = projects
-						return module
-				)(module)
-			return When.all(p).then (data) -> return data;
-
 
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
@@ -107,5 +123,6 @@ class Application
 		@routeManager.addRoute('/user/$login/modules', @onUserModulesRequest)
 		@routeManager.addRoute('/aer/duty', @onAerDutyRequest)
 		@routeManager.addRoute('/netsoul', @onNetsoulRequest)
+		@routeManager.addRoute('/chained', @onChainedRequest)
 
 module.exports = Application;

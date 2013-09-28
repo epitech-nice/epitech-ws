@@ -21,10 +21,19 @@ Url = require('url');
 
 class HttpRequest
 	constructor: (@request) ->
+		if (@request)
+			@url = Url.parse(@request.url, true);
+		else
+			@url = Url.parse('');
 
-	getUrl: () -> @request.url
 
-	getQuery: () -> return Url.parse(@getUrl(), true).query;
+	getUrl: () -> @url.pathname;
+	setUrl: (url) ->
+		@url = Url.parse(url, true);
+		return this;
+
+
+	getQuery: () -> return @url.query;
 
 
 module.exports = HttpRequest
