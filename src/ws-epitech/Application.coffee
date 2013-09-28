@@ -71,7 +71,7 @@ class Application
 
 	onChainedRequest: (req, res, data) =>
 		urls = req.getQuery().urls;
-		if (!urls?) then throw {code:1}
+		if (!urls?) then throw "Bad params"
 		if (typeof urls == "string") then urls = [urls];
 		p = for url in urls
 			f = (req, res) =>
