@@ -72,6 +72,17 @@ class IntraCommunicator
 					partialReport[date] = day;
 			return partialReport;
 
+
+	getNsReport: (login, start, end) ->
+		promises = @getNsLog(login, start, end).then (nsLog) =>
+			res = {school:0, idleSchool:0, out:0, idleOut:0};
+			for date, log of nsLog
+				res.school += log.school;
+				res.idleSchool += log.idleSchool;
+				res.out += log.out;
+				res.idleOut += log.out;
+			return res;
+
 	getCityUsers: (city) ->
 		return Cache.find("INTRA.ALL_USERS.#{city}"). then (cached) =>
 			if (cached?) then return cached;
@@ -141,11 +152,14 @@ class IntraCommunicator
 			@_getJson("https://intra.epitech.eu/user/#{login}/?format=json").then (data) =>
 				user = {};
 				user.login = data.login;
-				user.lastname = data.lastname;
-				user.firstname = data.firstname;
+				if (user.lastname and user.firstname)
+					user.lastname = data.lastname;
+					user.firstname = data.firstname;
+				else
+					[user.firstname, user.lastname] = data.title.split(" ", 2);
 				user.picture = data.picture;
-				user.promo = data.promo;
-				user.semester = data.semester;
+				user.promo = if (data.promo?) then (data.promo) else (0);
+				user.semester = if (data.semester?) then (data.semester) else (0);
 				user.uid = data.uid;
 				user.location = data.location;
 				user.credits = user.possibleCredits = user.failedCredits = 0;
@@ -196,7 +210,8 @@ class IntraCommunicator
 					day = {school:rawDay[1], idleSchool:rawDay[2], out:rawDay[3], idleOut:rawDay[4], avg:rawDay[5]};
 					date = moment.unix(rawDay[0]).tz("Europe/Paris").format("YYYY-MM-DD");
 					report[date] = day;
-				Cache.insert("INTRA.NETSOUL.#{login}", report, moment().add('h', 2).toDate());
+				time = moment().add('day', 1).startOf('day').add('h', 5);
+				Cache.insert("INTRA.NETSOUL.#{login}", report, time.toDate());
 				return report;
 
 	_get: (url) ->
