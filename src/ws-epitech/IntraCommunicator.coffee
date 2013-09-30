@@ -210,7 +210,8 @@ class IntraCommunicator
 					day = {school:rawDay[1], idleSchool:rawDay[2], out:rawDay[3], idleOut:rawDay[4], avg:rawDay[5]};
 					date = moment.unix(rawDay[0]).tz("Europe/Paris").format("YYYY-MM-DD");
 					report[date] = day;
-				Cache.insert("INTRA.NETSOUL.#{login}", report, moment().add('h', 2).toDate());
+				time = moment().add('day', 1).startOf('day').add('h', 5);
+				Cache.insert("INTRA.NETSOUL.#{login}", report, time.toDate());
 				return report;
 
 	_get: (url) ->
