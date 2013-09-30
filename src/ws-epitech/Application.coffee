@@ -107,6 +107,17 @@ class Application
 	onAerDutyRequest: (req, res) => Aer.getDuty();
 	onUserRequest: (req, res, data) => @intraCommunicator.getUser(data.login);
 	onNetsoulRequest: (req, res) => @nsWatch.getReport();
+	onNetsoulReportRequest: (req, res, data) =>
+		params = req.getQuery();
+		res = {}
+		promises = for login, log of @nsWatch.getReport()
+			((login) =>
+				@intraCommunicator.getNsReport(login, params.start, params.end).then (r) =>
+					res[login] = r;
+			)(login)
+		return When.all(promises).then () ->
+			res
+
 	onUserModulesRequest: (req, res, data) => @intraCommunicator.getUserModules(data.login);
 	onYearModuleRequest: (req, res, data) => @intraCommunicator.getCityModules("FR/NCE", {scolaryear: parseInt(data.year)});
 
@@ -123,6 +134,7 @@ class Application
 		@routeManager.addRoute('/user/$login/modules', @onUserModulesRequest)
 		@routeManager.addRoute('/aer/duty', @onAerDutyRequest)
 		@routeManager.addRoute('/netsoul', @onNetsoulRequest)
+		@routeManager.addRoute('/netsoul/report', @onNetsoulReportRequest)
 		@routeManager.addRoute('/chained', @onChainedRequest)
 
 module.exports = Application;
