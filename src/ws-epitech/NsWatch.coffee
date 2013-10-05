@@ -35,10 +35,12 @@ class Communicator extends EventEmitter
 	run: () ->
 		@connected = true;
 		@client = net.connect(@serverPort, @serverName, @onConnect);
+		@client.setTimeout(1000 * 60 * 60);
 		@client.setEncoding('ascii');
 		@client.on('data', @onData);
 		@client.on('error', @onError);
 		@client.on('close', @onClose);
+		@client.on('timeout', @onTimeut);
 
 	onConnect: () =>
 		@emit('connect')
@@ -47,12 +49,16 @@ class Communicator extends EventEmitter
 		Logger.debug("Netsoul# > #{msg}");
 		@client.write("#{msg}\r\n", "ascii");
 
+
 	onData: (data) =>
 		@buffer = "#{@buffer}#{data}";
 		while ((i = @buffer.indexOf("\n")) != -1)
 			Logger.debug("Netsoul# < #{@buffer.slice(0, i)}");
 			@emit("cmd", @buffer.slice(0, i));
 			@buffer = @buffer.slice(i + 1);
+
+	onTimeout: () =>
+		@onError();
 
 	onError: () =>
 		@client.destroy();
