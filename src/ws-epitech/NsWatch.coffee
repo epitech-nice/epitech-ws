@@ -75,6 +75,7 @@ class NsClientLogger
 			@logins[login] = {sockets:[]};
 
 	log: (user) ->
+		if !@logins[user.login]? then @logins[user.login] = {sockets:[]}
 		sockets = @logins[user.login].sockets;
 		infos = {socket:user.socket, isAtEpitech: user.isAtEpitech, isActif:user.status == "actif"};
 		i = 0;
