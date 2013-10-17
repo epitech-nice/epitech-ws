@@ -37,10 +37,11 @@ class Communicator extends EventEmitter
 		@client = net.connect(@serverPort, @serverName, @onConnect);
 		@client.setTimeout(1000 * 60 * 60);
 		@client.setEncoding('ascii');
+		@client.setTimeout(10 * 1000);
 		@client.on('data', @onData);
 		@client.on('error', @onError);
 		@client.on('close', @onClose);
-		@client.on('timeout', @onTimeut);
+		@client.on('timeout', @onTimeout);
 
 	onConnect: () =>
 		@emit('connect')
@@ -103,6 +104,10 @@ class NsClientLogger
 		for login, status of @logins
 			logins.push(login)
 		return logins;
+
+	clear: () ->
+		for login,data of @logins
+			@logins[login] = {sockets:[]};
 
 
 class NsClient
@@ -205,6 +210,7 @@ class NsClient
 	_onDisconnect: () =>
 		@runDefer.reject("Netsoul: Connection Failed");
 		Logger.error("Netsoul: Connection failed");
+		@logger.clear();
 		setTimeout(() =>
 			Logger.error("Netsoul: Trying to reconnect");
 			@communicator.run()
