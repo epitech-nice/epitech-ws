@@ -37,7 +37,7 @@ class Communicator extends EventEmitter
 		@client = net.connect(@serverPort, @serverName, @onConnect);
 		@client.setTimeout(1000 * 60 * 60);
 		@client.setEncoding('ascii');
-		@client.setTimeout(10 * 1000);
+		@client.setTimeout(1000 * 60 * 15);
 		@client.on('data', @onData);
 		@client.on('error', @onError);
 		@client.on('close', @onClose);

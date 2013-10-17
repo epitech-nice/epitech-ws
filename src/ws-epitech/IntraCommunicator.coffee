@@ -19,6 +19,7 @@
 
 Cache = require('./Cache.coffee');
 Calendar = require('./Calendar.coffee');
+Csv = require('csv');
 Config = require('./Config.coffee');
 HttpClient = require('./HttpClient.coffee');
 moment = require('moment-timezone');
@@ -61,6 +62,16 @@ class IntraCommunicator
 				cal.addEvent(activity.title, start, end);
 			return cal
 
+
+	getCalendarInfos: (id) -> @_getJson("https://intra.epitech.eu/planning/#{id}?format=json");
+
+	getCalendarPresent: (id) ->
+		@getCalendarInfos(id).then (data) =>
+			@_getCsv("https://intra.epitech.eu/planning/#{id}/exportattendance?start=#{data.start}&end=#{data.end}&promo[]=1&promo[]=2&promo[]=3").then (csv) =>
+				res = {};
+				for line in csv
+					res[line.login] = {total_present: line['total des presences']};
+				return res;
 
 	getNsLog: (login, start, end) ->
 		@_getCompleteNsLog(login).then (report) ->
@@ -230,5 +241,14 @@ class IntraCommunicator
 			data = JSON.parse(jsonStr);
 			if (data.error?) then throw "Intra: #{data.error}"
 			return data;
+
+	_getCsv: (url) ->
+		p = @_get(url)
+		return p.then (csvStr) ->
+			defer = When.defer();
+			csv = Csv().from.string(csvStr, { columns:true, delimiter: ';'});
+			csv.to.array (data) =>
+				defer.resolve(data);
+			return defer.promise;
 
 module.exports = IntraCommunicator;
