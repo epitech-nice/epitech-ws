@@ -36,9 +36,11 @@ class Communicator extends EventEmitter
 		@connected = true;
 		@client = net.connect(@serverPort, @serverName, @onConnect);
 		@client.setEncoding('ascii');
+		@client.setTimeout(10 * 1000);
 		@client.on('data', @onData);
 		@client.on('error', @onError);
 		@client.on('close', @onClose);
+		@client.on('timeout', @onTimeout);
 
 	onConnect: () =>
 		@emit('connect')
@@ -53,6 +55,10 @@ class Communicator extends EventEmitter
 			Logger.debug("Netsoul# < #{@buffer.slice(0, i)}");
 			@emit("cmd", @buffer.slice(0, i));
 			@buffer = @buffer.slice(i + 1);
+
+	onTimeout: () =>
+		console.log("TIMEOUT!!!");
+		@onError();
 
 	onError: () =>
 		@client.destroy();
@@ -96,6 +102,10 @@ class NsClientLogger
 		for login, status of @logins
 			logins.push(login)
 		return logins;
+
+	clear: () ->
+		for login,data of @logins
+			@logins[login] = {sockets:[]};
 
 
 class NsClient
@@ -198,6 +208,7 @@ class NsClient
 	_onDisconnect: () =>
 		@runDefer.reject("Netsoul: Connection Failed");
 		Logger.error("Netsoul: Connection failed");
+		@logger.clear();
 		setTimeout(() =>
 			Logger.error("Netsoul: Trying to reconnect");
 			@communicator.run()
