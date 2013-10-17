@@ -121,6 +121,8 @@ class Application
 	onUserModulesRequest: (req, res, data) => @intraCommunicator.getUserModules(data.login);
 	onYearModuleRequest: (req, res, data) => @intraCommunicator.getCityModules("FR/NCE", {scolaryear: parseInt(data.year)});
 
+	onSusiePresentRequest: (req, res) => @intraCommunicator.getCalendarPresent(Config.get('susies-calendar-id'));
+
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
 		@routeManager.addRoute('/module/all', @onModuleAllRequest)
@@ -136,5 +138,6 @@ class Application
 		@routeManager.addRoute('/netsoul', @onNetsoulRequest)
 		@routeManager.addRoute('/netsoul/report', @onNetsoulReportRequest)
 		@routeManager.addRoute('/chained', @onChainedRequest)
+		@routeManager.addRoute('/susie/present', @onSusiePresentRequest)
 
 module.exports = Application;
