@@ -32,6 +32,7 @@ class HttpRequest
 		return this;
 
 
+	getCompleteUrl: () -> Url.format(@url);
 	getQuery: () -> return @url.query;
 
 module.exports = HttpRequest

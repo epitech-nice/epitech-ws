@@ -17,6 +17,9 @@
 # along with ws-epitech.If not, see <http://www.gnu.org/licenses/>.
 ##
 
+When = require('when');
+fn = require('when/function')
+
 class Cache
 	constructor: () ->
 
@@ -25,6 +28,13 @@ class Cache
 		p.then (results) ->
 			if (results.length == 0) then return null;
 			return results[0].value;
+
+	findOrInsert: (key, ttl, callback) ->
+		@find(key).then (result) =>
+			if (result?) then return When.resolve(result);
+			return fn.call(callback).then (data) =>
+				@insert(key, data, ttl);
+				return data;
 
 	insert: (key, value, ttl) ->
 		@db.insert(@collection, {key: key, value:value, ttl:ttl});

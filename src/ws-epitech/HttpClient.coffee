@@ -49,7 +49,7 @@ class HttpClient
 				resolver.resolve({res:res, data:data.toString('utf8')});
 
 		req.on 'error', () =>
-			defer.resolver.reject("Error - HttpClient - Can't load #{url}");
+			defer.resolver.reject("Error - HttpClient - Can't load #{Url.format(options.url)}");
 		if (options.headers?)
 			for header,value of options.headers
 				req.setHeader(header, value)

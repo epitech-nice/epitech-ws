@@ -20,10 +20,8 @@
 Cache = require('./Cache.coffee');
 
 class UrlCache
-	constructor: (@db) ->
-		@collection = "urlCache"
-
-	find: (url) -> Cache.find("URL.#{url}");
-	insert: (url, data, ttl) -> Cache.insert("URL.#{url}", data, ttl);
+	@findOrInsert: (url, ttl, callback) -> Cache.findOrInsert("URL.#{url}", ttl, callback);
+	@find: (url) -> Cache.find("URL.#{url}");
+	@insert: (url, data, ttl) -> Cache.insert("URL.#{url}", data, ttl);
 
 module.exports = UrlCache;

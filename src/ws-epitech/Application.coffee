@@ -91,44 +91,84 @@ class Application
 		return When.all(p)
 
 	onPedagoPlanningRequest: (req, res) =>
-		return @intraCommunicator.getCalandar(516).then (cal) ->
-			res.setMime("text/calendar");
-			return cal.toVCal();
+		res.setMime("text/calendar");
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('h', 1).toDate(), () =>
+			@intraCommunicator.getCalandar(516).then (cal) ->
+				return cal.toVCal();
 
 	onUserNsLogRequest: (req, res, data) =>
-		params = req.getQuery();
-		return @intraCommunicator.getNsLog(data.login, params.start, params.end);
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('day', 1).startOf('day').add('h', 5).toDate(), () =>
+			params = req.getQuery();
+			return @intraCommunicator.getNsLog(data.login, params.start, params.end);
 
-	onModuleAllRequest: (req, res) => @intraCommunicator.getCityModules("FR/NCE");
-	onModuleRegisteredRequest: (req, res, data) => @intraCommunicator.getModuleRegistred(data.year, data.moduleCode, data.instanceCode)
-	onModulePresentRequest: (req, res, data) => @intraCommunicator.getModulePresent(data.year, data.moduleCode, data.instanceCode)
-	onModuleProjectsRequest: (req, res, data) => @intraCommunicator.getModuleProject(data.year, data.moduleCode, data.instanceCode)
-	onUserAllRequest: (req, res) => @intraCommunicator.getCityUsers("FR/NCE");
-	onAerDutyRequest: (req, res) => Aer.getDuty();
-	onUserRequest: (req, res, data) => @intraCommunicator.getUser(data.login);
-	onNetsoulRequest: (req, res) => @nsWatch.getReport();
+	onModuleAllRequest: (req, res) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 7).toDate(), () =>
+			@intraCommunicator.getCityModules("FR/NCE");
+
+	onModuleRegisteredRequest: (req, res, data) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 1).toDate(), () =>
+			@intraCommunicator.getModuleRegistred(data.year, data.moduleCode, data.instanceCode)
+
+	onModulePresentRequest: (req, res, data) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 1).toDate(), () =>
+			@intraCommunicator.getModulePresent(data.year, data.moduleCode, data.instanceCode)
+
+	onModuleActivitiesRequest: (req, res, data) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 1).toDate(), () =>
+			@intraCommunicator.getModuleActivities(data.year, data.moduleCode, data.instanceCode)
+
+	onUserAllRequest: (req, res) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 7).toDate(), () =>
+			@intraCommunicator.getCityUsers("FR/NCE");
+
+	onAerDutyRequest: (req, res) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('h', 6).toDate(), () =>
+			Aer.getDuty();
+
+	onUserRequest: (req, res, data) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 1).toDate(), () =>
+			@intraCommunicator.getUser(data.login);
+
+	onNetsoulRequest: (req, res) =>
+		@nsWatch.getReport();
+
 	onNetsoulReportRequest: (req, res, data) =>
-		params = req.getQuery();
-		res = {}
-		promises = for login, log of @nsWatch.getReport()
-			((login) =>
-				@intraCommunicator.getNsReport(login, params.start, params.end).then (r) =>
-					res[login] = r;
-			)(login)
-		return When.all(promises).then () ->
-			res
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 1).startOf('day').add('h', 5).toDate(), () =>
+			params = req.getQuery();
+			res = {}
+			promises = for login, log of @nsWatch.getReport()
+				((login) =>
+					@intraCommunicator.getNsReport(login, params.start, params.end).then (r) =>
+						res[login] = r;
+				)(login)
+			return When.all(promises).then () ->
+				res
 
-	onUserModulesRequest: (req, res, data) => @intraCommunicator.getUserModules(data.login);
-	onYearModuleRequest: (req, res, data) => @intraCommunicator.getCityModules("FR/NCE", {scolaryear: parseInt(data.year)});
+	onUserModulesRequest: (req, res, data) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 1).toDate(), () =>
+			@intraCommunicator.getUserModules(data.login);
 
-	onSusiePresentRequest: (req, res) => @intraCommunicator.getCalendarPresent(Config.get('susies-calendar-id'));
+	onYearModuleRequest: (req, res, data) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 7).toDate(), () =>
+			@intraCommunicator.getCityModules("FR/NCE", {scolaryear: parseInt(data.year)});
+
+	onSusiePresentRequest: (req, res) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 1).toDate(), () =>
+			@intraCommunicator.getCalendarPresent(Config.get('susies-calendar-id'));
+
+	onPlanningRequest: (req, res) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('d', 1).startOf('day').toDate(), () =>
+			params = req.getQuery();
+			if (!params.start? || ! params.end?) then throw "Bad Params";
+			return @intraCommunicator.getPlanning(params.start, params.end);
 
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
+		@routeManager.addRoute('/planning', @onPlanningRequest)
 		@routeManager.addRoute('/module/all', @onModuleAllRequest)
 		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/registered', @onModuleRegisteredRequest)
 		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/present', @onModulePresentRequest)
-		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/project', @onModuleProjectsRequest)
+		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/activities', @onModuleActivitiesRequest)
 		@routeManager.addRoute('/module/$year/all', @onYearModuleRequest)
 		@routeManager.addRoute('/user/all', @onUserAllRequest)
 		@routeManager.addRoute('/user/$login', @onUserRequest)
