@@ -149,7 +149,9 @@ class IntraCommunicator
 			for ac in data
 				module = {moduleCode: ac.codemodule, instanceCode: ac.codeinstance, semester: ac.semester, scolaryear: ac.scolaryear}
 				module.title = ac.titlemodule;
-				planning.push({module: module, type: ac.type_code, start: ac.start, end: ac.end, activityCode: ac.codeacti, eventCode:ac.codeevent});
+				ev = {module: module, type: ac.type_code, start: ac.start, end: ac.end, activityCode: ac.codeacti, eventCode:ac.codeevent};
+				ev.title = ac.acti_title
+				planning.push(ev);
 			return planning;
 
 	getUser: (login) ->
