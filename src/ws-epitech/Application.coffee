@@ -162,6 +162,10 @@ class Application
 			if (!params.start? || ! params.end?) then throw "Bad Params";
 			return @intraCommunicator.getPlanning(params.start, params.end);
 
+	onEventRegisteredRequest: (req, res, data) =>
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('h', 1).toDate(), () =>
+			@intraCommunicator.getEventRegistered(data.year, data.moduleCode, data.instanceCode, data.activityCode, data.eventCode);
+
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
 		@routeManager.addRoute('/planning', @onPlanningRequest)
@@ -169,6 +173,7 @@ class Application
 		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/registered', @onModuleRegisteredRequest)
 		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/present', @onModulePresentRequest)
 		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/activities', @onModuleActivitiesRequest)
+		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/$activityCode/$eventCode/registered', @onEventRegisteredRequest)
 		@routeManager.addRoute('/module/$year/all', @onYearModuleRequest)
 		@routeManager.addRoute('/user/all', @onUserAllRequest)
 		@routeManager.addRoute('/user/$login', @onUserRequest)

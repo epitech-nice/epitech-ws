@@ -137,21 +137,23 @@ class IntraCommunicator
 		@_getJson("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}?format=json").then (data) ->
 			activities = [];
 			for activity in data.activites
-				activities.push({name: activity.title, start: activity.start, end: activity.end, type: activity.type_code});
+				ac = {name: activity.title, start: activity.start, end: activity.end, type: activity.type_code, activityCode: activity.codeacti, events:[]}
+				for event in activity.events
+					ac.events.push({eventCode:event.code, start: event.begin, end: event.end});
+				activities.push(ac);
 			return activities;
-
 
 	getPlanning: (startDate, endDate) ->
 		@_getJson("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}").then (data) ->
 			planning = [];
 			for ac in data
-				module = {moduleCode: ac.codemodule, codeInstance: ac.codeinstance, semester: ac.semester, scolaryear: ac.scolaryear}
+				module = {moduleCode: ac.codemodule, instanceCode: ac.codeinstance, semester: ac.semester, scolaryear: ac.scolaryear}
 				module.title = ac.titlemodule;
-				planning.push({module: module, type: ac.type_code, start: ac.start, end: ac.end});
+				planning.push({module: module, type: ac.type_code, start: ac.start, end: ac.end, activityCode: ac.codeacti, eventCode:ac.codeevent});
 			return planning;
 
 	getUser: (login) ->
-		@_getJson("https://intra.epitech.eu/user/#{login}/?format=json").then (data) =>
+		@_getJson("https://intra.epitech.eu/user/#{login}/?format=json", moment().add('d', 1).toDate()).then (data) =>
 			user = {};
 			user.login = data.login;
 			if (user.lastname and user.firstname)
@@ -173,7 +175,7 @@ class IntraCommunicator
 					return user;
 
 	getUserModules: (login) ->
-		@_getJson("https://intra.epitech.eu/user/#{login}/notes?format=json").then (data) =>
+		@_getJson("https://intra.epitech.eu/user/#{login}/notes?format=json", moment().add('d', 1).toDate()).then (data) =>
 			modules = [];
 			for module in data.modules
 				m = {};
@@ -186,6 +188,15 @@ class IntraCommunicator
 				m.instanceCode = module.codeinstance;
 				modules.push(m);
 			return modules;
+
+
+
+	getEventRegistered: (year, moduleCode, instanceCode, activityCode, eventCode) ->
+		@_getJson("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/#{activityCode}/#{eventCode}/registered?format=json").then (data) =>
+			users = {};
+			for line in data
+				users[line.login] = {present: if (line.present == "present") then true else false};
+			return users;
 
 	_getCityUserOffset: (city, offset) ->
 		users = []
