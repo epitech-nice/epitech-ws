@@ -27,6 +27,7 @@ HttpResponse = require('./HttpResponse.coffee');
 HttpJsonResponse = require('./HttpJsonResponse.coffee');
 IntraCommunicator = require('./IntraCommunicator.coffee');
 Logger = require('./Logger.coffee');
+moment = require('moment-timezone');
 NsWatch = require('./NsWatch.coffee');
 RouteManager = require('./RouteManager.coffee');
 When = require('when');
