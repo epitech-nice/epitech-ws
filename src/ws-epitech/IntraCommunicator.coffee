@@ -60,6 +60,21 @@ class IntraCommunicator
 				cal.addEvent(activity.title, start, end);
 			return cal
 
+	getCityPlanning: (city) ->
+		#TODO Find a way to make it work with all city
+		startDate = moment().subtract('month', 1).format("YYYY-MM-DD");
+		endDate = moment().add('month', 4).format("YYYY-MM-DD");
+		console.log("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}");
+		p = @_getJson("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}").then (json) =>
+			cal = new Calendar();
+			for activity in json
+				start = @intraToUTCTime(activity.start, "Europe/Paris");
+				end = @intraToUTCTime(activity.end, "Europe/Paris");
+				title = if (activity.title?) then (activity.title) else ("#{activity.titlemodule} / #{activity.acti_title}");
+				place = if (activity.room?) then (activity.room.code) else null;
+				if (!activity.calendar_type?)
+					cal.addEvent(title, start, end).setPlace(place);
+			return cal
 
 	getCalendarInfos: (id) -> @_getJson("https://intra.epitech.eu/planning/#{id}?format=json");
 

@@ -25,16 +25,26 @@ class Event
 		@end = moment(end)
 		@begin.utc();
 		@end.utc();
+		@place = null;
+
+	setPlace: (place) ->
+		@place = place;
 
 	toVEvent: () ->
-		return "BEGIN:VEVENT\nDTSTART:#{@begin.format('YYYYMMDDTHHmmss[Z]')}\nDTEND:#{@end.format('YYYYMMDDTHHmmss[Z]')}\nSUMMARY:#{@title}\nEND:VEVENT";
+		str = "BEGIN:VEVENT\nDTSTART:#{@begin.format('YYYYMMDDTHHmmss[Z]')}\nDTEND:#{@end.format('YYYYMMDDTHHmmss[Z]')}\nSUMMARY:#{@title}\n";
+		if (@place)
+			str = "#{str}LOCATION:#{@place}\n";
+		str = "#{str}END:VEVENT";
+		return str;
 
 class Calendar
 	constructor: () ->
 		@events = []
 
-	addEvent: (title, start, end) ->
-		@events.push(new Event(title, start, end));
+	addEvent: (title, start, end, place) ->
+		e = new Event(title, start, end);
+		@events.push(e);
+		return e;
 
 	toVCal: () ->
 		str = "BEGIN:VCALENDAR\nVERSION:2.0\n";

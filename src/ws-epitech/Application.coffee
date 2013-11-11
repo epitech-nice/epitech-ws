@@ -97,6 +97,19 @@ class Application
 			@intraCommunicator.getCalandar(516).then (cal) ->
 				return cal.toVCal();
 
+	onSusiePlanningRequest: (req, res) =>
+		res.setMime("text/calendar");
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('h', 1).toDate(), () =>
+			@intraCommunicator.getCalandar(627).then (cal) ->
+				return cal.toVCal();
+
+	onCityIcsPlanningRequest: (req, res, data) =>
+		res.setMime("text/calendar");
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('h', 4).toDate(), () =>
+			@intraCommunicator.getCityPlanning(data.city).then (cal) ->
+				return cal.toVCal();
+
+
 	onUserNsLogRequest: (req, res, data) =>
 		Cache.findOrInsert req.getCompleteUrl(), moment().add('day', 1).startOf('day').add('h', 5).toDate(), () =>
 			params = req.getQuery();
@@ -169,6 +182,8 @@ class Application
 
 	initRoutes: () ->
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
+		@routeManager.addRoute('/planning/susie.ics', @onSusiePlanningRequest)
+		@routeManager.addRoute('/planning/$city.ics', @onCityIcsPlanningRequest)
 		@routeManager.addRoute('/planning', @onPlanningRequest)
 		@routeManager.addRoute('/module/all', @onModuleAllRequest)
 		@routeManager.addRoute('/module/$year/$moduleCode/$instanceCode/registered', @onModuleRegisteredRequest)
