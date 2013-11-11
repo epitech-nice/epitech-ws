@@ -21,7 +21,7 @@ class HttpResponse
 	constructor: (@response) ->
 
 	setMime: (mime) ->
-		@response.setHeader("Content-Type", mime);
+		@response.setHeader("Content-Type", "#{mime}; charset=utf-8");
 
 	endJSON: (obj) ->
 		@setMime("application/json");
