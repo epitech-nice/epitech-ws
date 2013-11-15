@@ -23,11 +23,8 @@ moment = require('moment');
 
 class Aer
 	@getDuty: () ->
-		return Cache.find('AER.duty').then (data) ->
-			if (data?) then return data;
-			Aer._loadFromGoogle().then (data) ->
-				Cache.insert('AER.duty', data, moment().add('h', 1)).then () ->
-					return data;
+		Aer._loadFromGoogle().then (data) ->
+			return data;
 
 	@_loadFromGoogle: () ->
 		HttpClient.getJson("https://script.google.com/macros/s/AKfycbx87n3-T3SD59Pj_qUTQmTZaMfq4IAK_kQ_TIkXcQqC91Hx2dI/exec").then (data) ->
