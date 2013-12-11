@@ -103,6 +103,12 @@ class Application
 			@intraCommunicator.getCalandar(627).then (cal) ->
 				return cal.toVCal();
 
+	onAerPlanningRequest: (req, res) =>
+		res.setMime("text/calendar");
+		Cache.findOrInsert req.getCompleteUrl(), moment().add('h', 1).toDate(), () =>
+			@intraCommunicator.getCalandar(1236).then (cal) ->
+				return cal.toVCal();
+
 	onCityIcsPlanningRequest: (req, res, data) =>
 		res.setMime("text/calendar");
 		Cache.findOrInsert req.getCompleteUrl(), moment().add('h', 4).toDate(), () =>
@@ -181,6 +187,7 @@ class Application
 			@intraCommunicator.getEventRegistered(data.year, data.moduleCode, data.instanceCode, data.activityCode, data.eventCode);
 
 	initRoutes: () ->
+		@routeManager.addRoute('/planning/aer.ics', @onAerPlanningRequest)
 		@routeManager.addRoute('/planning/pedago.ics', @onPedagoPlanningRequest)
 		@routeManager.addRoute('/planning/susie.ics', @onSusiePlanningRequest)
 		@routeManager.addRoute('/planning/$city.ics', @onCityIcsPlanningRequest)
