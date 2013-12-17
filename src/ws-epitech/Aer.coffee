@@ -31,13 +31,13 @@ class Aer
 			duty = {};
 			for week in data
 				date = moment(week[0]).utc()
-				if (week[2] or week[3]) then duty[date.format("YYYY-MM-DD")] = [week[2], week[3]];
-				if (week[4] or week[5]) then duty[date.add('d', 1).format("YYYY-MM-DD")] =  [week[4], week[5]];
-				if (week[6] or week[7]) then duty[date.add('d', 1).format("YYYY-MM-DD")] =  [week[6], week[7]];
-				if (week[8] or week[9]) then duty[date.add('d', 1).format("YYYY-MM-DD")] =  [week[8], week[9]];
-				if (week[10] or week[11]) then duty[date.add('d', 1).format("YYYY-MM-DD")] =	[week[10], week[11]];
-				if (week[12] or week[13]) then duty[date.add('d', 1).format("YYYY-MM-DD")] =	[week[12], week[13]];
-				if (week[14] or week[15]) then duty[date.add('d', 1).format("YYYY-MM-DD")] =	[week[14], week[15]];
+				duty[date.format("YYYY-MM-DD")] = [week[2], week[3]];
+				duty[date.add('d', 1).format("YYYY-MM-DD")] =  [week[4], week[5]];
+				duty[date.add('d', 1).format("YYYY-MM-DD")] =  [week[6], week[7]];
+				duty[date.add('d', 1).format("YYYY-MM-DD")] =  [week[8], week[9]];
+				duty[date.add('d', 1).format("YYYY-MM-DD")] =	[week[10], week[11]];
+				duty[date.add('d', 1).format("YYYY-MM-DD")] =	[week[12], week[13]];
+				duty[date.add('d', 1).format("YYYY-MM-DD")] =	[week[14], week[15]];
 			return duty;
 
 module.exports = Aer;
