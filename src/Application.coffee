@@ -208,9 +208,13 @@ class Application
 			@intraCommunicator.getEventRegistered(year, moduleCode, instanceCode, activityCode, eventCode);
 
 	initRoutes: () ->
+		@express.use (req, res, next) ->
+			res.header('Access-Control-Allow-Origin', '*');
+			res.header("Access-Control-Allow-Headers", "X-Requested-With");
+			next();
+
 
 		handleRequest = (handler) => (req, res) => @handleRequest(req, res, handler);
-
 		@express.get('/planning/aer.ics', handleRequest(@onAerPlanningRequest))
 		@express.get('/planning/pedago.ics', handleRequest(@onPedagoPlanningRequest))
 		@express.get('/planning/susie.ics', handleRequest(@onSusiePlanningRequest))
