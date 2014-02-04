@@ -82,7 +82,7 @@ class Application
 					params[key.name] = res[i++]
 				res = When.defer();
 				res.json = (data) -> @resolve({url: url, data: data});
-				route.callbacks[0]({originalUrl: url, params: params}, res);
+				route.callbacks[0]({originalUrl: url, params: params, query: {}}, res);
 				return res.promise;
 		return HttpJsonResponse.error(404);
 
