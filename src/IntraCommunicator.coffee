@@ -24,7 +24,6 @@
 
 Calendar = require('./Calendar.coffee');
 Csv = require('csv');
-Config = require('./Config.coffee');
 HttpClient = require('./HttpClient.coffee');
 moment = require('moment-timezone');
 UrlCache  = require('./UrlCache.coffee');
@@ -33,9 +32,7 @@ When = require('when');
 
 class IntraCommunicator
 
-	constructor: (database) ->
-		@login = Config.get('login');
-		@password = Config.get('password');
+	constructor: (@login, @password) ->
 		@sid = null;
 
 	connect: () ->
@@ -115,8 +112,8 @@ class IntraCommunicator
 	getCityUsers: (city) -> @_getCityUserOffset(city, 0)
 
 
-	getCityModules: (city, filters) ->
-		end = Config.get('scolar-year');
+	getCityModules: (city, year, filters) ->
+		end = year;
 		begin = end - 3;
 		scolaryear = ""
 		for year in [begin..end]

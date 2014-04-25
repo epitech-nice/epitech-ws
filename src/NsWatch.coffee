@@ -23,7 +23,6 @@
 ##
 
 EventEmitter = require('events').EventEmitter;
-Config = require('./Config.coffee');
 crypto = require('crypto');
 Logger = require('./Logger.coffee');
 net = require('net');
@@ -117,8 +116,8 @@ class NsClientLogger
 
 class NsClient
 
-	constructor: (logins) ->
-		@communicator = new Communicator(Config.get('ns-server'), Config.get('ns-port'));
+	constructor: (server, port, @login, @password, logins) ->
+		@communicator = new Communicator(server, port);
 		@communicator.on('cmd', @_onCmd);
 		@communicator.on('disconnect', @_onDisconnect);
 		@logger = new NsClientLogger(logins);
@@ -158,8 +157,8 @@ class NsClient
 	_login: () ->
 		@_send("auth_ag ext_user none none").then () =>
 			hash = crypto.createHash('md5')
-			hash.update("#{@md5Hash}-#{@clientIp}/#{@clientPort}#{Config.get('ns-password')}");
-			@_send("ext_user_log #{Config.get('ns-login')} #{hash.digest('hex')} none none").then () =>
+			hash.update("#{@md5Hash}-#{@clientIp}/#{@clientPort}#{@password}");
+			@_send("ext_user_log #{@login} #{hash.digest('hex')} none none").then () =>
 				logins = @logger.getLogins();
 				@runDefer.resolve(true);
 				@_send("state server:#{new Date().getTime();}")
@@ -224,7 +223,7 @@ class NsClient
 
 
 class NsWatch
-	constructor: () ->
+	constructor: (@server, @port, @login, @password) ->
 		@nsClients = [];
 
 	run: (@logins) ->
@@ -233,7 +232,7 @@ class NsWatch
 		while (logins.length > 0)
 			s = logins.slice(0, 100)
 			logins.splice(0, 100)
-			@nsClients.push(new NsClient(s));
+			@nsClients.push(new NsClient(@server, @port, @login, @password, s));
 
 		p = 0;
 		for client in @nsClients

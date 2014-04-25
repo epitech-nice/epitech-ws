@@ -1,5 +1,5 @@
 ##
-#The MIT License (MIT)
+# The MIT License (MIT)
 #
 # Copyright (c) 2013 Jerome Quere <contact@jeromequere.com>
 #
@@ -35,13 +35,12 @@ moment = require('moment-timezone');
 NsWatch = require('./NsWatch.coffee');
 When = require('when');
 
-
 class Application
 	constructor: () ->
 		@express = express();
 		@database = new Database();
-		@intraCommunicator = new IntraCommunicator(@database);
-		@nsWatch = new NsWatch();
+		@intraCommunicator = new IntraCommunicator(Config.get('login'), Config.get('password'))
+		@nsWatch = new NsWatch(Config.get('ns-server'), Config.get('ns-port'), Config.get('ns-login'), Config.get('ns-password'));
 		@initRoutes()
 		Cache.setDb(@database);
 
@@ -127,7 +126,7 @@ class Application
 
 	onModuleAllRequest: (req, res) =>
 		Cache.findOrInsert req.originalUrl, moment().add('d', 7).toDate(), () =>
-			@intraCommunicator.getCityModules("FR/NCE");
+			@intraCommunicator.getCityModules("FR/NCE", Config.get('scolar-year'));
 
 	onModuleRegisteredRequest: (req, res) =>
 		year = req.params.year;
@@ -186,7 +185,7 @@ class Application
 	onYearModuleRequest: (req, res) =>
 		year = req.params.year;
 		Cache.findOrInsert req.originalUrl, moment().add('d', 7).toDate(), () =>
-			@intraCommunicator.getCityModules("FR/NCE", {scolaryear: parseInt(year)});
+			@intraCommunicator.getCityModules("FR/NCE", Config.get('scolar-year'), {scolaryear: parseInt(year)});
 
 	onSusiePresentRequest: (req, res) =>
 		Cache.findOrInsert req.originalUrl, moment().add('d', 1).toDate(), () =>
