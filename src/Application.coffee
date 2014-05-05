@@ -34,7 +34,7 @@ Logger = require('./Logger.coffee');
 moment = require('moment-timezone');
 NsWatch = require('./NsWatch.coffee');
 When = require('when');
-
+HttpClient = require('./HttpClient.coffee');
 
 class Application
 	constructor: () ->
@@ -57,7 +57,7 @@ class Application
 		console.log("Listening on #{Config.get('server.port')}");
 		p.then () => @express.listen(Config.get('server.port'))
 		p.otherwise (err) =>
-			Logger.error("Application: #{err}");
+			Logger.error("Application: #{err}", err.stack);
 			process.exit(1);
 
 
@@ -73,18 +73,7 @@ class Application
 			if (error.stack) then Logger.error(error.stack);
 			res.json(HttpJsonResponse.error(code, msg));
 
-	simulateGet: (url) =>
-		for route in @express.routes.get
-			if ((res = route.regexp.exec(url)))
-				params = {}
-				i = 1;
-				for key in route.keys
-					params[key.name] = res[i++]
-				res = When.defer();
-				res.json = (data) -> @resolve({url: url, data: data});
-				route.callbacks[0]({originalUrl: url, params: params, query: {}}, res);
-				return res.promise;
-		return HttpJsonResponse.error(404);
+	simulateGet: (url) => HttpClient.getJson("http://localhost:#{Config.get('server.port')}#{url}");
 
 	onChainedRequest: (req, res, data) =>
 		urls = req.query.urls;

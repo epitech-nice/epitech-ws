@@ -39,9 +39,9 @@ class IntraCommunicator
 		@sid = null;
 
 	connect: () ->
-		p = HttpClient.post("https://intra.epitech.eu", "login=#{encodeURIComponent(@login)}&password=#{encodeURIComponent(@password)}");
+		p = HttpClient.post("https://intra.epitech.eu", {login: @login, password: @password});
 		p = p.then (data) =>
-			if (data.res.statusCode != 302) then throw "IntraCommunicator - Bad logins"
+			if (data.res.statusCode != 302) then throw new Error("IntraCommunicator - Bad logins")
 			for cookie in data.res.headers['set-cookie']
 				cookie = cookie.split("; ")[0];
 				cookie = cookie.split("=");

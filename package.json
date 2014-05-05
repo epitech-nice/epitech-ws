@@ -13,6 +13,7 @@
 	"moment": "*",
 	"moment-timezone": "*",
 	"mongodb": "*",
+	"request": "*",
 	"when": "*"
     }
 }
