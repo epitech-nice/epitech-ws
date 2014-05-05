@@ -48,7 +48,9 @@ class Application
 	run: () ->
 		Logger.info("Start Application")
 		p = @database.run().then () =>
+			Logger.debug("Connect to database OK");
 			return @intraCommunicator.connect().then () =>
+				Logger.debug("Connect to epitech intra OK");
 				@intraCommunicator.getCityUsers("FR/NCE").then (users) =>
 					logins = [];
 					logins.push(user.login) for user in users;
@@ -73,7 +75,7 @@ class Application
 			if (error.stack) then Logger.error(error.stack);
 			res.json(HttpJsonResponse.error(code, msg));
 
-	simulateGet: (url) => HttpClient.getJson("http://localhost:#{Config.get('server.port')}#{url}");
+	simulateGet: (url) => HttpClient.getJson("http://localhost:#{Config.get('server.port')}#{url}").then (data) -> {url: url, data: data} 
 
 	onChainedRequest: (req, res, data) =>
 		urls = req.query.urls;
