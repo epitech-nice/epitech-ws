@@ -56,7 +56,7 @@ class IntraCommunicator
 		p = @_getJson("https://intra.epitech.eu/planning/#{id}/events?format=json");
 		return p.then (json) =>
 			cal = new Calendar();
-			for activity in json.activities
+			for activity in json
 				start = @intraToUTCTime(activity.start, "Europe/Paris");
 				end = @intraToUTCTime(activity.end, "Europe/Paris");
 				cal.addEvent(activity.title, start, end);
@@ -66,7 +66,6 @@ class IntraCommunicator
 		#TODO Find a way to make it work with all city
 		startDate = moment().subtract('month', 1).format("YYYY-MM-DD");
 		endDate = moment().add('month', 4).format("YYYY-MM-DD");
-		console.log("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}");
 		p = @_getJson("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}").then (json) =>
 			cal = new Calendar();
 			for activity in json
@@ -109,7 +108,7 @@ class IntraCommunicator
 				res.idleOut += log.out;
 			return res;
 
-	getCityUsers: (city) -> @_getCityUserOffset(city, 0)
+	getCityUsers: (city, year) -> @_getCityUserOffset(city, year, 0)
 
 
 	getCityModules: (city, year, filters) ->
@@ -217,14 +216,14 @@ class IntraCommunicator
 				users[line.login] = {present: if (line.present == "present") then true else false};
 			return users;
 
-	_getCityUserOffset: (city, offset) ->
+	_getCityUserOffset: (city, year, offset) ->
 		users = []
-		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=2013&active=true&location=#{city}&offset=#{offset}").then (data) =>
+		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=#{year}&active=true&location=#{city}&offset=#{offset}").then (data) =>
 				p = for user in data.items
 					@getUser(user.login).then (data) =>
 						users.push(data);
 				if (p.length + offset < data.total)
-					p.push(@_getCityUserOffset(city, p.length + offset).then (users2) ->
+					p.push(@_getCityUserOffset(city, year, p.length + offset).then (users2) ->
 						users = users.concat(users2)
 					)
 				return When.all(p).then () -> return users;

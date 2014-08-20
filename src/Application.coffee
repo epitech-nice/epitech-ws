@@ -51,7 +51,7 @@ class Application
 			Logger.debug("Connect to database OK");
 			return @intraCommunicator.connect().then () =>
 				Logger.debug("Connect to epitech intra OK");
-				@intraCommunicator.getCityUsers("FR/NCE").then (users) =>
+				@intraCommunicator.getCityUsers("FR/NCE", Config.get('scolar-year')).then (users) =>
 					logins = [];
 					logins.push(user.login) for user in users;
 					if (Config.get('ns-watch')?) then logins = logins.concat(Config.get('ns-watch'));
@@ -143,7 +143,7 @@ class Application
 
 	onUserAllRequest: (req, res) =>
 		Cache.findOrInsert req.originalUrl, moment().add('d', 7).toDate(), () =>
-			@intraCommunicator.getCityUsers("FR/NCE");
+			@intraCommunicator.getCityUsers("FR/NCE", Config.get('scolar-year'));
 
 	onAerDutyRequest: (req, res) =>
 		Cache.findOrInsert req.originalUrl, moment().add('h', 6).toDate(), () =>
