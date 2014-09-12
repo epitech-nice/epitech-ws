@@ -25,6 +25,7 @@
 Cache = require('./Cache.coffee');
 HttpClient = require('./HttpClient.coffee');
 moment = require('moment');
+Config = require('./Config.coffee');
 
 class Aer
 	@getDuty: () ->
@@ -32,7 +33,8 @@ class Aer
 			return data;
 
 	@_loadFromGoogle: () ->
-		HttpClient.getJson("https://script.google.com/macros/s/AKfycbx87n3-T3SD59Pj_qUTQmTZaMfq4IAK_kQ_TIkXcQqC91Hx2dI/exec").then (data) ->
+		url = Config.get('aer-planning-url')
+		HttpClient.getJson(url).then (data) ->
 			duty = {};
 			for week in data
 				date = moment(week[0]).utc()
