@@ -12,7 +12,7 @@
 	"express": "*",
 	"moment": "*",
 	"moment-timezone": "*",
-	"mongodb": "*",
+	"dirty": "*",
 	"when": "*"
     }
 }

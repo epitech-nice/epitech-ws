@@ -41,7 +41,7 @@ class HttpClient
 			res.on 'data', (chunk) ->
 				data = Buffer.concat([data, chunk]);
 			res.on 'end', () =>
-				Logger.info("#{options.method} #{Url.format(options.url)}");
+				Logger.debug("#{options.method} #{Url.format(options.url)}");
 				if (res.headers.location?)
 					url = Url.parse(res.headers.location);
 					if (url.path != options.url.path)

@@ -22,14 +22,15 @@
 # THE SOFTWARE.
 ##
 
-fileConfig = require('./config.json');
-
 class Config
 	constructor: () ->
 		@config = {}
 
-	load: () ->
-		@config = {server:{port: 4242}}
+	load: (path) ->
+		fileConfig = require(path);
+		@config = {
+			server: { port: 4242 }
+		}
 		for key, value of fileConfig
 			@config[key] = value;
 

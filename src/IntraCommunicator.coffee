@@ -49,7 +49,7 @@ class IntraCommunicator
 
 	intraToUTCTime: (dateString, timezoneFrom) ->
 		offset = moment(new Date(dateString)).tz(timezoneFrom).zone() - new Date().getTimezoneOffset();
-		return moment(new Date(dateString)).add('m', offset).toDate();
+		return moment(new Date(dateString)).add(offset, 'm').toDate();
 
 
 	getCalandar: (id) ->
@@ -65,7 +65,7 @@ class IntraCommunicator
 	getCityPlanning: (city) ->
 		#TODO Find a way to make it work with all city
 		startDate = moment().subtract('month', 1).format("YYYY-MM-DD");
-		endDate = moment().add('month', 4).format("YYYY-MM-DD");
+		endDate = moment().add(4, 'month').format("YYYY-MM-DD");
 		console.log("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}");
 		p = @_getJson("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}").then (json) =>
 			cal = new Calendar();
@@ -109,7 +109,7 @@ class IntraCommunicator
 				res.idleOut += log.out;
 			return res;
 
-	getCityUsers: (city) -> @_getCityUserOffset(city, 0)
+	getCityUsers: (city, year) -> @_getCityUserOffset(city, year, 0)
 
 
 	getCityModules: (city, year, filters) ->
@@ -172,7 +172,7 @@ class IntraCommunicator
 			return planning;
 
 	getUser: (login) ->
-		@_getJson("https://intra.epitech.eu/user/#{login}/?format=json", moment().add('d', 1).toDate()).then (data) =>
+		@_getJson("https://intra.epitech.eu/user/#{login}/?format=json", moment().add(1, 'd').toDate()).then (data) =>
 			user = {};
 			user.login = data.login;
 			if (user.lastname and user.firstname)
@@ -194,7 +194,7 @@ class IntraCommunicator
 					return user;
 
 	getUserModules: (login) ->
-		@_getJson("https://intra.epitech.eu/user/#{login}/notes?format=json", moment().add('d', 1).toDate()).then (data) =>
+		@_getJson("https://intra.epitech.eu/user/#{login}/notes?format=json", moment().add(1, 'd').toDate()).then (data) =>
 			modules = [];
 			for module in data.modules
 				m = {};
@@ -217,20 +217,20 @@ class IntraCommunicator
 				users[line.login] = {present: if (line.present == "present") then true else false};
 			return users;
 
-	_getCityUserOffset: (city, offset) ->
+	_getCityUserOffset: (city, year, offset) ->
 		users = []
-		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=2013&active=true&location=#{city}&offset=#{offset}").then (data) =>
+		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=#{year}&active=true&location=#{city}&offset=#{offset}").then (data) =>
 				p = for user in data.items
 					@getUser(user.login).then (data) =>
 						users.push(data);
 				if (p.length + offset < data.total)
-					p.push(@_getCityUserOffset(city, p.length + offset).then (users2) ->
+					p.push(@_getCityUserOffset(city, year, p.length + offset).then (users2) ->
 						users = users.concat(users2)
 					)
 				return When.all(p).then () -> return users;
 
 	_getCompleteNsLog: (login) ->
-		@_getJson("https://intra.epitech.eu/user/#{login}/netsoul?format=json", moment().add('d', 1).startOf('day').add('h', 5).toDate()).then (json) ->
+		@_getJson("https://intra.epitech.eu/user/#{login}/netsoul?format=json", moment().add(1, 'd').startOf('day').add(5, 'h').toDate()).then (json) ->
 			report = {};
 			for rawDay in json
 				day = {school:rawDay[1], idleSchool:rawDay[2], out:rawDay[3], idleOut:rawDay[4], avg:rawDay[5]};
@@ -239,7 +239,7 @@ class IntraCommunicator
 			return report;
 
 	_get: (url, ttl) ->
-		ttl = if (ttl?) then ttl else moment().add('m', 15).toDate();
+		ttl = if (ttl?) then ttl else moment().add(15, 'm').toDate();
 		return UrlCache.findOrInsert url, ttl, () =>
 			return	HttpClient.get(url, {headers:{Cookie:"PHPSESSID=#{@sid}"}}).then (res) =>
 				if (res.res.statusCode == 403)
@@ -250,7 +250,11 @@ class IntraCommunicator
 		p = @_get(url, ttl)
 		return p.then (jsonStr) ->
 			jsonStr = jsonStr.replace("// Epitech JSON webservice ...", "");
-			data = JSON.parse(jsonStr);
+			try
+				data = JSON.parse(jsonStr);
+			catch e
+				console.log(e);
+				console.log(jsonStr);
 			if (data.error?) then throw "Intra: #{data.error}"
 			return data;
 

@@ -24,10 +24,34 @@
 
 Application = require('./Application.coffee');
 Config = require('./Config.coffee');
+argv = require( 'argv' );
+Logger = require('./Logger.coffee');
 
 main = () ->
-	Config.load()
+	argv.version('0.1a');
+	argv.option({
+		name: 'config',
+		short: 'c',
+		type: 'path',
+		description: 'The path to the config.json file'
+	})
+	argv.option({
+		name: 'verbose',
+		short: 'v',
+		type: 'bool'
+		description: 'Verbose mode'
+	})
+	args = argv.run();
+
+	if (args.options.verbose?)
+		Logger.setLevel Logger.DEBUG_LEVEL
+
+
+	configFile = './config.json';
+	if (args.options.config?) then configFile = args.options.config;
+	Config.load(configFile)
+
 	app = new Application();
-	return app.run();
+	return app.start();
 
 main()

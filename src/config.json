@@ -1,0 +1,19 @@
+{
+        "server": {
+	    "port":4343
+	},
+        "login":"YOUR INTRANET LOGIN",
+        "password":"YOUR INTRANET PASSWORD",
+        "ns-login":"YOUR NETSOUL LOGIN",
+        "ns-password":"YOUR NETSOUL PASSWORD",
+        "ns-server": "ns-server.epita.fr",
+        "ns-port": 4242,
+        "ns-watch": ["LOGIN ADM 1", "LOGIN ADM 2", "LOGIN ADM 3"],
+        "scolar-year": 2014,
+        "susies-calendar-id": {
+	    "NCE": 1934
+	},
+        "aer-planning-url": {
+	    "NCE": "https://script.google.com/macros/s/AKfycbwa_6CUGYMjl-uyN8teN2Elay_l6-aFSjRJyY5-V-OQnL6rk8k/exec"
+	}
+}

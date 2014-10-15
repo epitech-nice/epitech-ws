@@ -36,7 +36,7 @@ class Communicator extends EventEmitter
 		@connected = false;
 		@buffer = "";
 
-	run: () ->
+	start: () ->
 		@connected = true;
 		@client = net.connect(@serverPort, @serverName, @onConnect);
 		@client.setTimeout(1000 * 60 * 60);
@@ -46,6 +46,9 @@ class Communicator extends EventEmitter
 		@client.on('error', @onError);
 		@client.on('close', @onClose);
 		@client.on('timeout', @onTimeout);
+
+	stop: () ->
+		@client.end();
 
 	onConnect: () =>
 		@emit('connect')
@@ -123,10 +126,16 @@ class NsClient
 		@logger = new NsClientLogger(logins);
 		@callback = null;
 		@runDefer = When.defer();
+		@running = false;
 
-	run: () ->
-		@communicator.run();
+	start: () ->
+		@running = true;
+		@communicator.start();
 		return @runDefer.promise;
+
+	stop: () ->
+		@running = false;
+		@communicator.stop();
 
 	getReport: () -> @logger.getReport();
 
@@ -212,12 +221,13 @@ class NsClient
 		if (@callback?) then @callback(cmd == "rep 002 -- cmd end")
 
 	_onDisconnect: () =>
+		if (@running == false) then return;
 		@runDefer.reject("Netsoul: Connection Failed");
 		Logger.error("Netsoul: Connection failed");
 		@logger.clear();
 		setTimeout(() =>
 			Logger.error("Netsoul: Trying to reconnect");
-			@communicator.run()
+			@communicator.start()
 		, 2000);
 
 
@@ -226,7 +236,7 @@ class NsWatch
 	constructor: (@server, @port, @login, @password) ->
 		@nsClients = [];
 
-	run: (@logins) ->
+	start: (@logins) ->
 		@nsClients = []
 		logins = @logins.slice(0)
 		while (logins.length > 0)
@@ -236,8 +246,13 @@ class NsWatch
 
 		p = 0;
 		for client in @nsClients
-			p = When.join(p, client.run())
+			p = When.join(p, client.start())
 		return p;
+
+	stop: () ->
+		for client in @nsClients
+			client.stop();
+		@nsClients = [];
 
 	getReport: () ->
 		report = {}
