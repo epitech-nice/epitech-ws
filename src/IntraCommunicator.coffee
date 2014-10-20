@@ -23,7 +23,7 @@
 ##
 
 Calendar = require('./Calendar.coffee');
-Csv = require('csv');
+CsvParse = require('csv-parse');
 HttpClient = require('./HttpClient.coffee');
 moment = require('moment-timezone');
 UrlCache  = require('./UrlCache.coffee');
@@ -52,11 +52,11 @@ class IntraCommunicator
 		return moment(new Date(dateString)).add(offset, 'm').toDate();
 
 
-	getCalandar: (id) ->
+	getCalendar: (id) ->
 		p = @_getJson("https://intra.epitech.eu/planning/#{id}/events?format=json");
 		return p.then (json) =>
 			cal = new Calendar();
-			for activity in json.activities
+			for activity in json
 				start = @intraToUTCTime(activity.start, "Europe/Paris");
 				end = @intraToUTCTime(activity.end, "Europe/Paris");
 				cal.addEvent(activity.title, start, end);
@@ -66,7 +66,6 @@ class IntraCommunicator
 		#TODO Find a way to make it work with all city
 		startDate = moment().subtract('month', 1).format("YYYY-MM-DD");
 		endDate = moment().add(4, 'month').format("YYYY-MM-DD");
-		console.log("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}");
 		p = @_getJson("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}").then (json) =>
 			cal = new Calendar();
 			for activity in json
@@ -219,7 +218,8 @@ class IntraCommunicator
 
 	_getCityUserOffset: (city, year, offset) ->
 		users = []
-		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=#{year}&active=true&location=#{city}&offset=#{offset}").then (data) =>
+		ttl = moment().add(1, 'd').toDate();
+		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=#{year}&active=true&location=#{city}&offset=#{offset}", ttl).then (data) =>
 				p = for user in data.items
 					@getUser(user.login).then (data) =>
 						users.push(data);
@@ -240,6 +240,7 @@ class IntraCommunicator
 
 	_get: (url, ttl) ->
 		ttl = if (ttl?) then ttl else moment().add(15, 'm').toDate();
+		console.log(url, ttl);
 		return UrlCache.findOrInsert url, ttl, () =>
 			return	HttpClient.get(url, {headers:{Cookie:"PHPSESSID=#{@sid}"}}).then (res) =>
 				if (res.res.statusCode == 403)
@@ -262,8 +263,10 @@ class IntraCommunicator
 		p = @_get(url, ttl)
 		return p.then (csvStr) ->
 			defer = When.defer();
-			csv = Csv().from.string(csvStr, { columns:true, delimiter: ';'});
-			csv.to.array (data) =>
+			csv = CsvParse csvStr, { columns:true, delimiter: ';'}, (err, data) ->
+				if err?
+					defer.reject(err)
+					return
 				defer.resolve(data);
 			return defer.promise;
 

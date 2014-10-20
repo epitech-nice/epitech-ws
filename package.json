@@ -8,7 +8,7 @@
 	"url" : "https://github.com/jerome-quere/ws-epitech"
     },
     "dependencies": {
-	"csv": "*",
+	"csv-parse": "*",
 	"express": "*",
 	"moment": "*",
 	"moment-timezone": "*",
