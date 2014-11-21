@@ -97,16 +97,16 @@ class IntraCommunicator
 	getCityModules: (city, year) ->
 		end = year;
 		begin = end - 3;
-		scolaryear = ""
+		scholaryear = ""
 		for year in [begin..end]
-			scolaryear = "#{scolaryear}&scolaryear[]=#{year}"
-		return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}&#{scolaryear}").then (data) =>
+			scholaryear = "#{scholaryear}&scolaryear[]=#{year}"
+		return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}&#{scholaryear}").then (data) =>
 			modules = []
 			for module in data
 				m = {};
 				m.title = module.title;
 				m.semester = module.semester;
-				m.scolaryear = module.scolaryear;
+				m.scholaryear = module.scolaryear;
 				m.moduleCode = module.code;
 				m.instanceCode = module.codeinstance;
 				m.credits = module.credits;
@@ -152,7 +152,7 @@ class IntraCommunicator
 						moduleCode: ac.codemodule,
 						instanceCode: ac.codeinstance,
 						semester: ac.semester,
-						scolaryear: ac.scolaryear,
+						scholaryear: ac.scolaryear,
 						title: ac.titlemodule
 					},
 					type: ac.type_code,
@@ -193,7 +193,7 @@ class IntraCommunicator
 			modules = [];
 			for module in data.modules
 				m = {};
-				m.scolaryear = module.scolaryear;
+				m.scholaryear = module.scolaryear;
 				m.title = module.title;
 				m.grade = module.grade;
 				m.credits = module.credits;

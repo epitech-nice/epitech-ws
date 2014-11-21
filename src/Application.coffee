@@ -59,7 +59,7 @@ class Application
 			return @intraCommunicator.connect().then () =>
 				Logger.info "Connection to intranet SUCCESS"
 				promises = for city in @getCitiesCodes()
-					@initNsWatch(city, Config.get('scolar-year'));
+					@initNsWatch(city, Config.get('scholar-year'));
 				return When.all(promises);
 
 		p.then () =>
@@ -152,9 +152,9 @@ class Application
 		city = @checkCityFromRequest(req)
 		filters = null
 		if (req.query.year?)
-			filters = {scolaryear: parseInt(@checkParam(req.query, 'year'))}
+			filters = {scholaryear: parseInt(@checkParam(req.query, 'year'))}
 		Cache.findOrInsert req.originalUrl, moment().add(1, 'd').toDate(), () =>
-			@intraCommunicator.getCityModules(city, Config.get('scolar-year')).then (ms) ->
+			@intraCommunicator.getCityModules(city, Config.get('scholar-year')).then (ms) ->
 				modules = []
 				for m in ms
 					if (Utils.match(m, filters)) then modules.push(m)
@@ -184,7 +184,7 @@ class Application
 	onCityUsersRequest: (req, res) =>
 		city = @checkCityFromRequest(req)
 		Cache.findOrInsert req.originalUrl, moment().add(1, 'd').toDate(), () =>
-			@getCityUserLogins(city, Config.get('scolar-year')).then (logins) =>
+			@getCityUserLogins(city, Config.get('scholar-year')).then (logins) =>
 				p = for login in logins
 					@intraCommunicator.getUser(login)
 				return When.all(p)
