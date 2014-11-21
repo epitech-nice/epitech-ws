@@ -94,7 +94,6 @@ class IntraCommunicator
 
 	getCityUsers: (city, year) -> @_getCityUserOffset(city, year, 0)
 
-
 	getCityModules: (city, year) ->
 		end = year;
 		begin = end - 3;
@@ -217,14 +216,12 @@ class IntraCommunicator
 		users = []
 		ttl = moment().add(1, 'd').toDate();
 		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=#{year}&active=true&location=#{city}&offset=#{offset}", ttl).then (data) =>
-				p = for user in data.items
-					@getUser(user.login).then (data) =>
-						users.push(data);
-				if (p.length + offset < data.total)
-					p.push(@_getCityUserOffset(city, year, p.length + offset).then (users2) ->
+				for user in data.items
+					users.push(user.login);
+				if (data.items.length + offset < data.total)
+					return @_getCityUserOffset(city, year, data.items.length + offset).then (users2) ->
 						users = users.concat(users2)
-					)
-				return When.all(p).then () -> return users;
+				return users;
 
 	_getCompleteNsLog: (login) ->
 		@_getJson("https://intra.epitech.eu/user/#{login}/netsoul?format=json", moment().add(1, 'd').startOf('day').add(5, 'h').toDate()).then (json) ->

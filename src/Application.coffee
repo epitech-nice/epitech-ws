@@ -69,9 +69,7 @@ class Application
 			process.exit(1);
 
 	initNsWatch: (city, scholarYear) ->
-		return @intraCommunicator.getCityUsers(city, scholarYear).then (users) =>
-			logins = [];
-			logins.push(user.login) for user in users;
+		return @intraCommunicator.getCityUsers(city, scholarYear).then (logins) =>
 			return @nsWatch[city].start(logins);
 
 	stop: () ->
@@ -180,7 +178,10 @@ class Application
 	onCityUsersRequest: (req, res) =>
 		city = @checkCityFromRequest(req)
 		Cache.findOrInsert req.originalUrl, moment().add(1, 'd').toDate(), () =>
-			@intraCommunicator.getCityUsers(city, Config.get('scolar-year'));
+			@intraCommunicator.getCityUsers(city, Config.get('scolar-year')).then (logins) =>
+				p = for login in logins
+					@intraCommunicator.getUser(login)
+				return When.all(p)
 
 	onCityAerDutyRequest: (req, res) =>
 		city = @checkCityFromRequest(req);
