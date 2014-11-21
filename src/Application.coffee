@@ -36,6 +36,7 @@ moment = require('moment-timezone');
 NsWatch = require('./NsWatch.coffee');
 Utils = require('./Utils.coffee');
 When = require('when');
+_ = require('underscore')
 
 class Application
 	constructor: () ->
@@ -44,11 +45,12 @@ class Application
 		@database = new Database(Config.get('database'));
 		@intraCommunicator = new IntraCommunicator(Config.get('login'), Config.get('password'))
 		@nsWatch = {};
-		for city in Config.get("cities")
+		for city in @getCitiesCodes()
 			@nsWatch[city] = new NsWatch(Config.get('ns-server'), Config.get('ns-port'), Config.get('ns-login'), Config.get('ns-password'));
 		@initRoutes()
 		@initSignals();
 		Cache.setDb(@database);
+
 
 	start: () ->
 		Logger.info("Start Application")
@@ -56,7 +58,7 @@ class Application
 			Logger.info "Connection to database SUCCESS"
 			return @intraCommunicator.connect().then () =>
 				Logger.info "Connection to intranet SUCCESS"
-				promises = for city in Config.get("cities")
+				promises = for city in @getCitiesCodes()
 					@initNsWatch(city, Config.get('scolar-year'));
 				return When.all(promises);
 
@@ -68,8 +70,12 @@ class Application
 			if (err.stack?) then Logger.error(err.stack);
 			process.exit(1);
 
-	initNsWatch: (city, scholarYear) ->
+	getCityUserLogins: (city, scholarYear) ->
 		return @intraCommunicator.getCityUsers(city, scholarYear).then (logins) =>
+			return _.union(logins, Config.get("cities.#{city}.adms"))
+
+	initNsWatch: (city, scholarYear) ->
+		@getCityUserLogins(city, scholarYear).then (logins) =>
 			return @nsWatch[city].start(logins);
 
 	stop: () ->
@@ -178,7 +184,7 @@ class Application
 	onCityUsersRequest: (req, res) =>
 		city = @checkCityFromRequest(req)
 		Cache.findOrInsert req.originalUrl, moment().add(1, 'd').toDate(), () =>
-			@intraCommunicator.getCityUsers(city, Config.get('scolar-year')).then (logins) =>
+			@getCityUserLogins(city, Config.get('scolar-year')).then (logins) =>
 				p = for login in logins
 					@intraCommunicator.getUser(login)
 				return When.all(p)
@@ -248,9 +254,10 @@ class Application
 		if (!moment(tab[name]).isValid()) then throw "#{name} is not a valid date"
 		return tab[name]
 
+	getCitiesCodes: () -> code for code, conf of Config.get("cities")
 	checkCityFromRequest: (req) ->
 		city = "#{req.params.country}/#{req.params.city}"
-		if (city not in Config.get('cities')) then throw "Bad city"
+		if (city not in @getCitiesCodes()) then throw "Bad city"
 		return city
 
 	initRoutes: () ->

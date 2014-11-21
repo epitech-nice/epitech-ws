@@ -176,7 +176,7 @@ class IntraCommunicator
 			else
 				[user.firstname, user.lastname] = data.title.split(" ", 2);
 				user.picture = data.picture;
-				user.promo = if (data.promo?) then (data.promo) else (0);
+				user.promo = if (data.promo?) then (data.promo) else ("ADM");
 				user.semester = if (data.semester?) then (data.semester) else (0);
 				user.uid = data.uid;
 				user.location = data.location;
