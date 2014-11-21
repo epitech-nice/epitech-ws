@@ -41,7 +41,7 @@ class Application
 	constructor: () ->
 		@express = express();
 		@server = null
-		@database = new Database('test.db');
+		@database = new Database(Config.get('database'));
 		@intraCommunicator = new IntraCommunicator(Config.get('login'), Config.get('password'))
 		@nsWatch = {};
 		for city in Config.get("cities")

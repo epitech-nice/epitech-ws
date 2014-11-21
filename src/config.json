@@ -10,6 +10,7 @@
         "ns-port": 4242,
         "ns-watch": ["LOGIN ADM 1", "LOGIN ADM 2", "LOGIN ADM 3"],
         "scolar-year": 2014,
+        "database": "./ws-epitech.db",
         "cities": ["FR/NCE", "FR/MPL"],
         "aer-planning-url": {
 	    "NCE": "https://script.google.com/macros/s/AKfycbwa_6CUGYMjl-uyN8teN2Elay_l6-aFSjRJyY5-V-OQnL6rk8k/exec"
