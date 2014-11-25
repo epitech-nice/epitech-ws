@@ -147,6 +147,7 @@ class IntraCommunicator
 			planning = [];
 			for ac in data
 				if ac.id_calendar? then continue;
+				if ac.instance_location != city then continue;
 				ev = {
 					module: {
 						moduleCode: ac.codemodule,
@@ -234,7 +235,6 @@ class IntraCommunicator
 
 	_get: (url, ttl) ->
 		ttl = if (ttl?) then ttl else moment().add(15, 'm').toDate();
-		console.log(url, ttl);
 		return UrlCache.findOrInsert url, ttl, () =>
 			return	HttpClient.get(url, {headers:{Cookie:"PHPSESSID=#{@sid};language=fr"}}).then (res) =>
 				if (res.res.statusCode == 403)
