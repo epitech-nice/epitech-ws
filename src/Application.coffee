@@ -124,7 +124,7 @@ class Application
 	onCityIcsPlanningRequest: (req, res) =>
 		res.type("text/calendar");
 		city = @checkCityFromRequest(req);
-		startDate = moment().subtract('month', 1).format("YYYY-MM-DD");
+		startDate = moment().subtract(1, 'month').format("YYYY-MM-DD");
 		endDate = moment().add(4, 'month').format("YYYY-MM-DD");
 		calendar = new Calendar();
 		Cache.findOrInsert req.originalUrl, moment().add(4, 'h').toDate(), () =>
