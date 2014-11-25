@@ -64,7 +64,7 @@ class IntraCommunicator
 
 	getCityPlanning: (city) ->
 		#TODO Find a way to make it work with all city
-		startDate = moment().subtract('month', 1).format("YYYY-MM-DD");
+		startDate = moment().subtract(1, 'month').format("YYYY-MM-DD");
 		endDate = moment().add('month', 4).format("YYYY-MM-DD");
 		p = @_getJson("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}").then (json) =>
 			cal = new Calendar();
