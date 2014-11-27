@@ -22,37 +22,45 @@
 # THE SOFTWARE.
 ##
 
-MongoClient = require('mongodb').MongoClient
-When = require('when');
+When = require('when')
+dirty = require('dirty')
+Logger = require('./Logger.coffee')
 
 class Database
-	constructor: () ->
+	constructor: (@path) ->
+		@db = null
 
-	run : () ->
+	start: () ->
 		deffer = When.defer()
-		MongoClient.connect 'mongodb://127.0.0.1:27017/ws-epitech', (err, db) =>
-			if (err?) then return deffer.reject(err);
-			@db = db;
+		@db = dirty(@path);
+		@db.on 'load', () ->
 			deffer.resolve(true);
 		return deffer.promise;
 
-	find: (collection, search) ->
+	find: (key) ->
 		defer = When.defer();
-		collection = @db.collection(collection);
-		collection.find(search).toArray (err, results) ->
-			if (err) then defer.reject(err);
-			defer.resolve(results);
+		row = @db.get key
+		if !row
+			defer.resolve(null);
+		else
+			if (row.ttl?)
+				ttl = new Date(row.ttl);
+				now = new Date();
+				if (ttl < now)
+					@delete(key);
+					row.data = null;
+			defer.resolve(row.data);
 		return defer.promise;
 
-	insert: (collection, data) ->
+	delete: (key) -> @db.set(key, undefined);
+
+	insert: (key, value, ttl) ->
 		defer = When.defer();
-		collection = @db.collection(collection);
-		collection.insert data, (err, docs) ->
-			if (err)
-				defer.reject(err)
-				return;
-			defer.resolve(docs);
+		@db.set(key, {data: value, ttl: ttl});
+		defer.resolve(value);
 		return defer.promise;
 
+	stop: () ->
+		if (@db) then @db.close()
 
 module.exports = Database;

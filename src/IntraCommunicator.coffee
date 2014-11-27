@@ -22,12 +22,10 @@
 # THE SOFTWARE.
 ##
 
-Calendar = require('./Calendar.coffee');
-Csv = require('csv');
+CsvParse = require('csv-parse');
 HttpClient = require('./HttpClient.coffee');
 moment = require('moment-timezone');
 UrlCache  = require('./UrlCache.coffee');
-Utils = require('./Utils.coffee');
 When = require('when');
 
 class IntraCommunicator
@@ -47,35 +45,21 @@ class IntraCommunicator
 		return p;
 
 
-	intraToUTCTime: (dateString, timezoneFrom) ->
+	intraToUTCTime: (dateString, timezoneFrom = 'Europe/Paris') ->
 		offset = moment(new Date(dateString)).tz(timezoneFrom).zone() - new Date().getTimezoneOffset();
-		return moment(new Date(dateString)).add('m', offset).toDate();
+		return moment(new Date(dateString)).add(offset, 'm').toDate();
 
-
-	getCalandar: (id) ->
+	getCalendar: (id) ->
 		p = @_getJson("https://intra.epitech.eu/planning/#{id}/events?format=json");
 		return p.then (json) =>
-			cal = new Calendar();
-			for activity in json
-				start = @intraToUTCTime(activity.start, "Europe/Paris");
-				end = @intraToUTCTime(activity.end, "Europe/Paris");
-				cal.addEvent(activity.title, start, end);
-			return cal
-
-	getCityPlanning: (city) ->
-		#TODO Find a way to make it work with all city
-		startDate = moment().subtract(1, 'month').format("YYYY-MM-DD");
-		endDate = moment().add('month', 4).format("YYYY-MM-DD");
-		p = @_getJson("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}").then (json) =>
-			cal = new Calendar();
-			for activity in json
-				start = @intraToUTCTime(activity.start, "Europe/Paris");
-				end = @intraToUTCTime(activity.end, "Europe/Paris");
-				title = if (activity.title?) then (activity.title) else ("#{activity.titlemodule} / #{activity.acti_title}");
-				place = if (activity.room?) then (activity.room.code) else null;
-				if (!activity.calendar_type?)
-					cal.addEvent(title, start, end).setPlace(place);
-			return cal
+			events = []
+			for event in json
+				events.push({
+					start: @intraToUTCTime(event.start),
+					end: @intraToUTCTime(event.end),
+					title: event.title
+				});
+			return events
 
 	getCalendarInfos: (id) -> @_getJson("https://intra.epitech.eu/planning/#{id}?format=json");
 
@@ -110,24 +94,23 @@ class IntraCommunicator
 
 	getCityUsers: (city, year) -> @_getCityUserOffset(city, year, 0)
 
-
-	getCityModules: (city, year, filters) ->
+	getCityModules: (city, year) ->
 		end = year;
 		begin = end - 3;
-		scolaryear = ""
+		scholaryear = ""
 		for year in [begin..end]
-			scolaryear = "#{scolaryear}&scolaryear[]=#{year}"
-		return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}&#{scolaryear}").then (data) =>
+			scholaryear = "#{scholaryear}&scolaryear[]=#{year}"
+		return @_getJson("https://intra.epitech.eu/course/filter?format=json&location=#{city}&#{scholaryear}").then (data) =>
 			modules = []
 			for module in data
 				m = {};
 				m.title = module.title;
 				m.semester = module.semester;
-				m.scolaryear = module.scolaryear;
+				m.scholaryear = module.scolaryear;
 				m.moduleCode = module.code;
 				m.instanceCode = module.codeinstance;
 				m.credits = module.credits;
-				if (Utils.match(m, filters)) then modules.push(m)
+				modules.push(m)
 			return modules;
 
 
@@ -159,19 +142,33 @@ class IntraCommunicator
 				activities.push(ac);
 			return activities;
 
-	getPlanning: (startDate, endDate) ->
-		@_getJson("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}").then (data) ->
+	getCityPlanning: (city, startDate, endDate) ->
+		@_getJson("https://intra.epitech.eu/planning/load?format=json&start=#{startDate}&end=#{endDate}").then (data) =>
 			planning = [];
 			for ac in data
-				module = {moduleCode: ac.codemodule, instanceCode: ac.codeinstance, semester: ac.semester, scolaryear: ac.scolaryear}
-				module.title = ac.titlemodule;
-				ev = {module: module, type: ac.type_code, start: ac.start, end: ac.end, activityCode: ac.codeacti, eventCode:ac.codeevent};
-				ev.title = ac.acti_title
+				if ac.id_calendar? then continue;
+				if ac.instance_location != city then continue;
+				ev = {
+					module: {
+						moduleCode: ac.codemodule,
+						instanceCode: ac.codeinstance,
+						semester: ac.semester,
+						scholaryear: ac.scolaryear,
+						title: ac.titlemodule
+					},
+					type: ac.type_code,
+					start: @intraToUTCTime(ac.start),
+					end: @intraToUTCTime(ac.end),
+					activityCode: ac.codeacti,
+					eventCode:ac.codeevent,
+					title: ac.acti_title,
+					place: if (ac.room?) then (ac.room.code) else null;
+				}
 				planning.push(ev);
 			return planning;
 
 	getUser: (login) ->
-		@_getJson("https://intra.epitech.eu/user/#{login}/?format=json", moment().add('d', 1).toDate()).then (data) =>
+		@_getJson("https://intra.epitech.eu/user/#{login}/?format=json", moment().add(1, 'd').toDate()).then (data) =>
 			user = {};
 			user.login = data.login;
 			if (user.lastname and user.firstname)
@@ -180,7 +177,7 @@ class IntraCommunicator
 			else
 				[user.firstname, user.lastname] = data.title.split(" ", 2);
 				user.picture = data.picture;
-				user.promo = if (data.promo?) then (data.promo) else (0);
+				user.promo = if (data.promo?) then (data.promo) else ("ADM");
 				user.semester = if (data.semester?) then (data.semester) else (0);
 				user.uid = data.uid;
 				user.location = data.location;
@@ -193,11 +190,11 @@ class IntraCommunicator
 					return user;
 
 	getUserModules: (login) ->
-		@_getJson("https://intra.epitech.eu/user/#{login}/notes?format=json", moment().add('d', 1).toDate()).then (data) =>
+		@_getJson("https://intra.epitech.eu/user/#{login}/notes?format=json", moment().add(1, 'd').toDate()).then (data) =>
 			modules = [];
 			for module in data.modules
 				m = {};
-				m.scolaryear = module.scolaryear;
+				m.scholaryear = module.scolaryear;
 				m.title = module.title;
 				m.grade = module.grade;
 				m.credits = module.credits;
@@ -218,18 +215,17 @@ class IntraCommunicator
 
 	_getCityUserOffset: (city, year, offset) ->
 		users = []
-		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=#{year}&active=true&location=#{city}&offset=#{offset}").then (data) =>
-				p = for user in data.items
-					@getUser(user.login).then (data) =>
-						users.push(data);
-				if (p.length + offset < data.total)
-					p.push(@_getCityUserOffset(city, year, p.length + offset).then (users2) ->
+		ttl = moment().add(1, 'd').toDate();
+		return @_getJson("https://intra.epitech.eu/user/filter/user?format=json&year=#{year}&active=true&location=#{city}&offset=#{offset}", ttl).then (data) =>
+				for user in data.items
+					users.push(user.login);
+				if (data.items.length + offset < data.total)
+					return @_getCityUserOffset(city, year, data.items.length + offset).then (users2) ->
 						users = users.concat(users2)
-					)
-				return When.all(p).then () -> return users;
+				return users;
 
 	_getCompleteNsLog: (login) ->
-		@_getJson("https://intra.epitech.eu/user/#{login}/netsoul?format=json", moment().add('d', 1).startOf('day').add('h', 5).toDate()).then (json) ->
+		@_getJson("https://intra.epitech.eu/user/#{login}/netsoul?format=json", moment().add(1, 'd').startOf('day').add(5, 'h').toDate()).then (json) ->
 			report = {};
 			for rawDay in json
 				day = {school:rawDay[1], idleSchool:rawDay[2], out:rawDay[3], idleOut:rawDay[4], avg:rawDay[5]};
@@ -238,9 +234,9 @@ class IntraCommunicator
 			return report;
 
 	_get: (url, ttl) ->
-		ttl = if (ttl?) then ttl else moment().add('m', 15).toDate();
+		ttl = if (ttl?) then ttl else moment().add(15, 'm').toDate();
 		return UrlCache.findOrInsert url, ttl, () =>
-			return	HttpClient.get(url, {headers:{Cookie:"PHPSESSID=#{@sid}"}}).then (res) =>
+			return	HttpClient.get(url, {headers:{Cookie:"PHPSESSID=#{@sid};language=fr"}}).then (res) =>
 				if (res.res.statusCode == 403)
 					return @connect().then () => @_get(url)
 				return res.data;
@@ -249,7 +245,11 @@ class IntraCommunicator
 		p = @_get(url, ttl)
 		return p.then (jsonStr) ->
 			jsonStr = jsonStr.replace("// Epitech JSON webservice ...", "");
-			data = JSON.parse(jsonStr);
+			try
+				data = JSON.parse(jsonStr);
+			catch e
+				console.log(e);
+				console.log(jsonStr);
 			if (data.error?) then throw "Intra: #{data.error}"
 			return data;
 
@@ -257,8 +257,10 @@ class IntraCommunicator
 		p = @_get(url, ttl)
 		return p.then (csvStr) ->
 			defer = When.defer();
-			csv = Csv().from.string(csvStr, { columns:true, delimiter: ';'});
-			csv.to.array (data) =>
+			csv = CsvParse csvStr, { columns:true, delimiter: ';'}, (err, data) ->
+				if err?
+					defer.reject(err)
+					return
 				defer.resolve(data);
 			return defer.promise;
 

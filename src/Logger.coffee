@@ -24,34 +24,34 @@
 
 class Logger
 
-	@ERROR_LEVEL = 1
-	@WARN_LEVEL = 2
-	@INFO_LEVEL = 3
-	@DEBUG_LEVEL = 4
 
 	constructor: () ->
-		@level = Logger.INFO_LEVEL;
-		for arg in process.argv
-			if (arg == '-v')
-				@level = Logger.DEBUG_LEVEL;
+		@ERROR_LEVEL = 1
+		@WARN_LEVEL = 2
+		@INFO_LEVEL = 3
+		@DEBUG_LEVEL = 4
+
+		@level = @INFO_LEVEL;
+
+	setLevel: (@level) ->
 
 	error: (args...) ->
-		if (@_shoodPrint(Logger.ERROR_LEVEL))
+		if (@_shoodPrint(@ERROR_LEVEL))
 			str = "ERROR  #{@_getDate()} - #{@_getStr(args)}"
 			console.log(str);
 
 	warn: (args...) ->
-		if (@_shoodPrint(Logger.WARN_LEVEL))
+		if (@_shoodPrint(@WARN_LEVEL))
 			str = "WARN   #{@_getDate()} - #{@_getStr(args)}"
 			console.log(str);
 
 	info: (args...) ->
-		if (@_shoodPrint(Logger.INFO_LEVEL))
+		if (@_shoodPrint(@INFO_LEVEL))
 			str = "INFO   #{@_getDate()} - #{@_getStr(args)}"
 			console.log(str);
 
 	debug: (args...) ->
-		if (@_shoodPrint(Logger.DEBUG_LEVEL))
+		if (@_shoodPrint(@DEBUG_LEVEL))
 			str = "DEBUG  #{@_getDate()} - #{@_getStr(args)}"
 			console.log(str);
 

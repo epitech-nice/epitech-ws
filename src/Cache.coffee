@@ -27,24 +27,21 @@ fn = require('when/function')
 
 class Cache
 	constructor: () ->
+		@db = null
 
 	find: (key) ->
-		p = @db.find(@collection, {key:key})
-		p.then (results) ->
-			if (results.length == 0) then return null;
-			return results[0].value;
+		return @db.find(key)
 
 	findOrInsert: (key, ttl, callback) ->
 		@find(key).then (result) =>
 			if (result?) then return When.resolve(result);
-			return fn.call(callback).then (data) =>
-				@insert(key, data, ttl);
-				return data;
+			return fn.call(callback).then (value) =>
+				@insert(key, value, ttl);
+				return value;
 
 	insert: (key, value, ttl) ->
-		@db.insert(@collection, {key: key, value:value, ttl:ttl});
+		@db.insert(key, value, ttl);
 
 	setDb: (@db) ->
-		@collection = "cache"
 
 module.exports = new Cache();

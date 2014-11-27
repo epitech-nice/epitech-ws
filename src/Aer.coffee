@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 ##
 
-Cache = require('./Cache.coffee');
 HttpClient = require('./HttpClient.coffee');
 moment = require('moment');
 Config = require('./Config.coffee');
@@ -39,12 +38,12 @@ class Aer
 			for week in data
 				date = moment(week[0]).utc()
 				duty[date.format("YYYY-MM-DD")] = [week[2], week[3]];
-				duty[date.add('d', 1).format("YYYY-MM-DD")] =  [week[4], week[5]];
-				duty[date.add('d', 1).format("YYYY-MM-DD")] =  [week[6], week[7]];
-				duty[date.add('d', 1).format("YYYY-MM-DD")] =  [week[8], week[9]];
-				duty[date.add('d', 1).format("YYYY-MM-DD")] =	[week[10], week[11]];
-				duty[date.add('d', 1).format("YYYY-MM-DD")] =	[week[12], week[13]];
-				duty[date.add('d', 1).format("YYYY-MM-DD")] =	[week[14], week[15]];
+				duty[date.add(1, 'd').format("YYYY-MM-DD")] =  [week[4], week[5]];
+				duty[date.add(1, 'd').format("YYYY-MM-DD")] =  [week[6], week[7]];
+				duty[date.add(1, 'd').format("YYYY-MM-DD")] =  [week[8], week[9]];
+				duty[date.add(1, 'd').format("YYYY-MM-DD")] =	[week[10], week[11]];
+				duty[date.add(1, 'd').format("YYYY-MM-DD")] =	[week[12], week[13]];
+				duty[date.add(1, 'd').format("YYYY-MM-DD")] =	[week[14], week[15]];
 			return duty;
 
 module.exports = Aer;

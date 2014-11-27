@@ -8,12 +8,13 @@
 	"url" : "https://github.com/jerome-quere/ws-epitech"
     },
     "dependencies": {
-	"csv": "*",
+	"csv-parse": "*",
+	"argv": "*",
 	"express": "*",
 	"moment": "*",
 	"moment-timezone": "*",
-	"mongodb": "*",
-	"request": "*",
-	"when": "*"
+	"dirty": "*",
+	"when": "*",
+	"underscore": "*"
     }
 }
