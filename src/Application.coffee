@@ -245,9 +245,8 @@ class Application
 		Cache.findOrInsert req.originalUrl, moment().add(4, 'h').toDate(), () =>
 			@intraCommunicator.getEventRegistered(year, moduleCode, instanceCode, activityCode, eventCode);
 
-	onCityRequest: (req, res) =>
-		city = @checkCityFromRequest(req)
-		return {};
+	onCitiesRequest: (req, res) =>
+		return @getCitiesCodes()
 
 	checkParam: (tab, name) ->
 		if (!tab[name]?) then throw "Missing #{name} parameter"
@@ -289,7 +288,7 @@ class Application
 		@express.get('/:country/:city/aer/duty', handleRequest(@onCityAerDutyRequest))
 		@express.get('/:country/:city/netsoul', handleRequest(@onCityNetsoulRequest))
 		@express.get('/:country/:city/nslog', handleRequest(@onCityNsLogRequest))
-		@express.get('/:country/:city', handleRequest(@onCityRequest))
+		@express.get('/cities', handleRequest(@onCitiesRequest))
 
 	initSignals: () ->
 		process.on 'SIGINT', () =>
