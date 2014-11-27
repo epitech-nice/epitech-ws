@@ -15,6 +15,7 @@
 	"moment-timezone": "*",
 	"dirty": "*",
 	"when": "*",
-	"underscore": "*"
+	"underscore": "*",
+	"request": "*"
     }
 }

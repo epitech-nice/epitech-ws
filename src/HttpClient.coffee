@@ -30,42 +30,6 @@ When = require('when')
 request = require('request');
 
 class HttpClient
-	@request: (options, post) ->
-		defer = When.defer()
-		tool = http;
-		if (options.url.protocol == 'https:')
-			tool = https;
-		options.url.method = if (options.method?) then	options.method else "GET";
-		req = tool.request options.url, (res) =>
-			data = new Buffer(0);
-			resolver = defer.resolver
-			res.on 'data', (chunk) ->
-				data = Buffer.concat([data, chunk]);
-			res.on 'end', () =>
-				Logger.debug("#{options.method} #{Url.format(options.url)}");
-				if (res.headers.location?)
-					url = Url.parse(res.headers.location);
-					if (url.path != options.url.path)
-						for key, value of url
-							if (url[key]?) then options.url[key] = value;
-						resolver.resolve(@request(options, post));
-						return;
-				if (options.encoding? and options.encoding != "utf8")
-					data = new Iconv(options.encoding, 'UTF-8').convert(data);
-				resolver.resolve({res:res, data:data.toString('utf8')});
-
-		req.on 'error', () =>
-			defer.resolver.reject("Error - HttpClient - Can't load #{Url.format(options.url)}");
-		if (options.headers?)
-			for header,value of options.headers
-				req.setHeader(header, value)
-		if (post?)
-			req.setHeader("Content-Length", post.length);
-			req.setHeader("Content-Type", "application/x-www-form-urlencoded");
-			req.write(post);
-		req.end();
-		return (defer.promise);
-
 	@get: (url, options) ->
 		if (!options)
 			options = {}
