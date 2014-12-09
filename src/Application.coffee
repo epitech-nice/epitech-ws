@@ -127,7 +127,7 @@ class Application
 		startDate = moment().subtract(1, 'month').format("YYYY-MM-DD");
 		endDate = moment().add(4, 'month').format("YYYY-MM-DD");
 		calendar = new Calendar();
-		Cache.findOrInsert req.originalUrl, moment().add(12, 'h').toDate(), () =>
+		Cache.findOrInsert req.originalUrl, moment().add(4, 'h').toDate(), () =>
 			@intraCommunicator.getCityPlanning(city, startDate, endDate).then (events) ->
 				for event in events
 					calendar.addEvent(event.title, event.start, event.end, null).setPlace(event.place)
