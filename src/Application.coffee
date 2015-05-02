@@ -31,6 +31,7 @@ express = require('express');
 fn = require('when/function');
 HttpJsonResponse = require('./HttpJsonResponse.coffee');
 IntraCommunicator = require('./IntraCommunicator.coffee');
+DoodleCommunicator = require('./DoodleCommunicator.coffee');
 Logger = require('./Logger.coffee');
 moment = require('moment-timezone');
 NsWatch = require('./NsWatch.coffee');
@@ -248,6 +249,10 @@ class Application
 	onCitiesRequest: (req, res) =>
 		return @getCitiesCodes()
 
+	onDoodlePollRequest: (req, res) =>
+		pollId = req.params.pollId;
+		return DoodleCommunicator.getPoll(pollId);
+
 	checkParam: (tab, name) ->
 		if (!tab[name]?) then throw "Missing #{name} parameter"
 		return tab[name]
@@ -289,6 +294,7 @@ class Application
 		@express.get('/:country/:city/netsoul', handleRequest(@onCityNetsoulRequest))
 		@express.get('/:country/:city/nslog', handleRequest(@onCityNsLogRequest))
 		@express.get('/cities', handleRequest(@onCitiesRequest))
+		@express.get('/doodle/:pollId', handleRequest(@onDoodlePollRequest))
 
 	initSignals: () ->
 		process.on 'SIGINT', () =>
