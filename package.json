@@ -1,11 +1,11 @@
 {
-    "name": "ws-epitech",
+    "name": "epitech-ws",
     "version": "0.1.0",
     "author": "Jerome Quere <contact@jeromequere.com>",
     "description": "A webservice to query epitech intranet",
     "repository" : {
 	"type" : "git",
-	"url" : "https://github.com/jerome-quere/ws-epitech"
+	"url" : "https://github.com/epitech-nice/epitech-ws"
     },
     "dependencies": {
 	"csv-parse": "*",
