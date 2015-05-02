@@ -253,6 +253,9 @@ class Application
 		pollId = req.params.pollId;
 		return DoodleCommunicator.getPoll(pollId);
 
+	onUsageRequest: (req, res) =>
+		return "This is a webservice used by several EPITECH application want to know more go to https://github.com/epitech-nice/epitech-ws"
+
 	checkParam: (tab, name) ->
 		if (!tab[name]?) then throw "Missing #{name} parameter"
 		return tab[name]
@@ -295,6 +298,7 @@ class Application
 		@express.get('/:country/:city/nslog', handleRequest(@onCityNsLogRequest))
 		@express.get('/cities', handleRequest(@onCitiesRequest))
 		@express.get('/doodle/:pollId', handleRequest(@onDoodlePollRequest))
+		@express.get('/', handleRequest(@onUsageRequest))
 
 	initSignals: () ->
 		process.on 'SIGINT', () =>
