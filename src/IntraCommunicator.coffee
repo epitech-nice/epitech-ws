@@ -122,10 +122,8 @@ class IntraCommunicator
 			return students;
 
 	getModulePresent: (year, moduleCode, instanceCode) ->
-		@_get("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/present?format=json").then (data) ->
-			regexp = new RegExp('className": "notes",[\\s\\S]*"items": (\\[.*\\]),[\\s\\S]+"columns":');
-			res = regexp.exec(data);
-			students = JSON.parse(res[1]);
+		@_getJson("https://intra.epitech.eu/module/#{year}/#{moduleCode}/#{instanceCode}/present?format=json").then (data) ->
+			students = data.present
 			data = {}
 			for s in students
 				data[s.login] = {total_registered: s.total_registered, total_present: s.total_present, total_absent: s.total_absent};
