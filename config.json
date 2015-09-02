@@ -8,7 +8,7 @@
         "ns-password":"YOUR NETSOUL PASSWORD",
         "ns-server": "ns-server.epita.fr",
         "ns-port": 4242,
-        "scholar-year": 2014,
+        "scholar-year": 2015,
         "database": "./epitech-ws.db",
         "cities": {
 	    "FR/NCE": {
